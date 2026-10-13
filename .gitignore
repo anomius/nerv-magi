@@ -10,6 +10,8 @@ promo/out/
 promo/public/footage/
 promo/public/fonts/
 promo/public/audio/
+# music demos: renders, analysis pictures and checks (sources and MIDI are committed)
+promo/music-demos/out/
 node_modules/
 # local build settings (e.g. a jobs cap on a small machine)
 .cargo/config.toml
