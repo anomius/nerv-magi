@@ -1,0 +1,7 @@
+{
+  "name": "example-128",
+  "bpm": 128,
+  "beatsPerBar": 4,
+  "offsetSec": 1.875,
+  "audio": "byo-audio/tracks/example-128.wav"
+}

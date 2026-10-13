@@ -1,10 +1,24 @@
+import { createContext, useContext } from "react";
 import { useVideoConfig } from "remotion";
 
-/** Frame geometry for the two cuts: 1920×1080 master and the 1080×1350 feed recompose. */
+/**
+ * The 9:16 cut lays its type out in a stage: the frame minus the platforms' unsafe bands (no text in
+ * the top 220 px and bottom 380 px of 1080×1920). The stage, 1080×1320, is laid out like the 4:5 cut;
+ * backgrounds bleed past it to the frame's edges.
+ */
+export const TALL_SAFE = { top: 220, bottom: 380 } as const;
+export type Stage = { w: number; h: number; top: number; bottom: number };
+export const StageContext = createContext<Stage | null>(null);
+
+/** Frame geometry for the cuts: 1920×1080 master, 1080×1350 feed recompose, 1080×1920 vertical (stage). */
 export const useLayout = () => {
-  const { width: w, height: h, fps } = useVideoConfig();
+  const { width, height, fps } = useVideoConfig();
+  const stage = useContext(StageContext);
+  const w = stage?.w ?? width;
+  const h = stage?.h ?? height;
   const portrait = h > w;
-  return { w, h, fps, portrait, cx: w / 2, cy: h / 2 };
+  // `bleed`: how far the frame reaches past the stage (backgrounds extend by it; type never does)
+  return { w, h, fps, portrait, tall: stage !== null, bleed: { top: stage?.top ?? 0, bottom: stage?.bottom ?? 0 }, cx: w / 2, cy: h / 2 };
 };
 
 /** Pick a value: `lp(portrait, forPortrait, forLandscape)`. */

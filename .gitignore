@@ -10,6 +10,9 @@ promo/out/
 promo/public/footage/
 promo/public/fonts/
 promo/public/audio/
+promo/public/footage-4k/
+# licensed / private music for re-timed previews (tracks/*.json point here): never committed
+promo/byo-audio/
 # music demos: renders, analysis pictures and checks (sources and MIDI are committed)
 promo/music-demos/out/
 node_modules/

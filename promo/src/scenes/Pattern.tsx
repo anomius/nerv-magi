@@ -1,49 +1,51 @@
 import React from "react";
 import { AbsoluteFill, Easing, interpolate, useCurrentFrame } from "remotion";
 import { C, F, glow } from "../theme";
-import { T, hash } from "../timeline";
+import { hash, type Timeline } from "../timeline";
+import { useTL } from "../tl";
 import { Hazard, Mono, OUT, caText, clamp, hexCells, hexPath } from "../fx";
 import { lp, useLayout } from "../layout";
 import { PILOTS, SECTORS, axial } from "../pilots";
 
-const S = T.scenes.pattern[0];
-const P = T.pattern;
-
-/** Pilots in sweep order (left to right): pilot i lights at P.hexes + rank * P.hexStep. */
+/** Pilots in sweep order (left to right): the k-th lights on the k-th 8th of the sweep (pattern.hexes). */
 const ORDER = PILOTS.map((p, i) => ({ i, x: axial(p.q, p.r, 1).x + p.r * 0.01 }))
   .sort((a, b) => a.x - b.x)
   .map((o) => o.i);
-export const lightAt = (i: number) => P.hexes + ORDER.indexOf(i) * P.hexStep;
+export const lightAt = (tl: Timeline, i: number) => tl.pattern.hexes[ORDER.indexOf(i)];
 
 /** 0:07-0:13 Hex grid sweep: herdr panes light up as hexes, PATTERN: CLAUDE / CODEX. */
 export const Pattern: React.FC = () => {
   const frame = useCurrentFrame();
+  const tl = useTL();
+  const S = tl.scenes.pattern[0];
+  const P = tl.pattern;
   const f = frame + S;
-  const { w, h, cx, portrait } = useLayout();
+  const { w, h, cx, portrait, tall, bleed } = useLayout();
   const size = lp(portrait, 104, 100);
   const cy = lp(portrait, 700, 640);
   // the sweep band passes each pilot hex exactly when it lights
   const xs = ORDER.map((i) => cx + axial(PILOTS[i].q, PILOTS[i].r, size).x);
-  const times = ORDER.map((_, k) => P.hexes + k * P.hexStep);
-  const bandX = interpolate(f, [P.sweep, ...times, times[times.length - 1] + 40], [-200, ...xs, w + 300], clamp);
-  const lit = (i: number) => f >= lightAt(i);
+  const times = P.hexes;
+  const bandX = interpolate(f, [P.sweep, ...times, times[times.length - 1] + tl.d(40)], [-200, ...xs, w + 300], clamp);
+  const lit = (i: number) => f >= lightAt(tl, i);
   const count = PILOTS.filter((_, i) => lit(i)).length;
   const sectors = Math.min(SECTORS, Math.round((count / PILOTS.length) * SECTORS));
   // handoff: the camera dives into the centre hex (the hub), which becomes MAGI's frame
-  const dive = interpolate(f, [P.zoom, T.scenes.pattern[1]], [1, 9], { ...clamp, easing: Easing.in(Easing.cubic) });
+  const dive = interpolate(f, [P.zoom, tl.scenes.pattern[1]], [1, 9], { ...clamp, easing: Easing.in(Easing.cubic) });
   const header = f >= P.header;
-  const hk = f - P.header;
-  const bg = hexCells(w, h, lp(portrait, 52, 58), 0, 0);
+  const hk = tl.k(f - P.header);
+  // the 9:16 stage: the grid and the sweep reach the frame's edges
+  const bg = hexCells(w, h + bleed.top + bleed.bottom, lp(portrait, 52, 58), 0, -bleed.top);
 
   return (
-    <AbsoluteFill style={{ backgroundColor: "#000", overflow: "hidden" }}>
+    <AbsoluteFill style={{ backgroundColor: "#000", overflow: tall ? "visible" : "hidden" }}>
       <AbsoluteFill style={{ scale: String(dive), transformOrigin: `${cx}px ${cy}px` }}>
         {/* background grid, brightened by the sweep */}
-        <svg width={w} height={h} style={{ position: "absolute" }}>
+        <svg width={w} height={h} style={{ position: "absolute", overflow: tall ? "visible" : undefined }}>
           {bg.map((c, k) => {
             const d = Math.abs(c.cx - bandX);
             const near = Math.max(0, 1 - d / 260);
-            const born = interpolate(f, [S + (c.row + c.col) * 0.6, S + 14 + (c.row + c.col) * 0.6], [0, 1], clamp);
+            const born = interpolate(f, [S + tl.d((c.row + c.col) * 0.6), S + tl.d(14 + (c.row + c.col) * 0.6)], [0, 1], clamp);
             return (
               <path
                 key={k}
@@ -63,12 +65,12 @@ export const Pattern: React.FC = () => {
           style={{
             position: "absolute",
             left: bandX - 6,
-            top: 0,
+            top: -bleed.top,
             width: 12,
-            height: h,
+            height: h + bleed.top + bleed.bottom,
             backgroundColor: C.amber,
             boxShadow: `0 0 60px 30px rgba(255,170,0,0.35)`,
-            opacity: f < times[times.length - 1] + 40 ? 0.9 : 0,
+            opacity: f < times[times.length - 1] + tl.d(40) ? 0.9 : 0,
           }}
         />
         <div
@@ -93,10 +95,10 @@ export const Pattern: React.FC = () => {
         {PILOTS.map((p, i) => {
           const { x, y } = axial(p.q, p.r, size);
           const on = lit(i);
-          const k = f - lightAt(i);
+          const k = tl.k(f - lightAt(tl, i));
           const color = p.kind === "claude" ? C.orange : C.cyan;
           const pop = on ? interpolate(k, [0, 5, 12], [1.25, 0.96, 1], clamp) : 1;
-          const flick = on && k < 8 && k % 2 === 0;
+          const flick = on && k < 8 && Math.floor(k) % 2 === 0;
           return (
             <div key={p.name} style={{ position: "absolute", left: cx + x - size, top: cy + y - size, width: size * 2, height: size * 2, scale: String(pop) }}>
               <svg width={size * 2} height={size * 2} style={{ position: "absolute" }}>
@@ -122,9 +124,9 @@ export const Pattern: React.FC = () => {
       </AbsoluteFill>
 
       {/* HUD (does not dive) */}
-      <AbsoluteFill style={{ opacity: interpolate(f, [P.zoom, P.zoom + 20], [1, 0], clamp) }}>
-        <Hazard style={{ left: 0, right: 0, top: 0, height: 30 }} speed={3} />
-        <Hazard style={{ left: 0, right: 0, bottom: 0, height: 30 }} speed={-3} />
+      <AbsoluteFill style={{ opacity: interpolate(f, [P.zoom, P.zoom + tl.d(20)], [1, 0], clamp) }}>
+        <Hazard style={{ left: 0, right: 0, top: -bleed.top, height: 30 }} speed={3} />
+        <Hazard style={{ left: 0, right: 0, bottom: -bleed.bottom, height: 30 }} speed={-3} />
         <div style={{ position: "absolute", left: lp(portrait, 50, 70), top: lp(portrait, 54, 50), display: "flex", flexDirection: "column", gap: 0 }}>
           <span style={{ fontFamily: F.serif, fontWeight: 900, fontSize: lp(portrait, 60, 68), lineHeight: 1.1, color: C.white }}>全区画</span>
           <span style={{ fontFamily: F.head, fontWeight: 700, fontSize: lp(portrait, 40, 44), lineHeight: 1.1, color: C.orange, letterSpacing: 4, textShadow: glow(C.orange, 10) }}>
@@ -132,7 +134,7 @@ export const Pattern: React.FC = () => {
           </span>
         </div>
         <Mono size={24} color={C.orange} style={{ position: "absolute", left: lp(portrait, 52, 72), top: lp(portrait, 180, 186), opacity: 0.8 }}>
-          {`HERDR LINK · ${String(Math.min(100, Math.max(0, Math.round((f - S) * 0.9)))).padStart(3, "0")}%`}
+          {`HERDR LINK · ${String(Math.min(100, Math.max(0, Math.round(tl.k(f - S) * 0.9)))).padStart(3, "0")}%`}
         </Mono>
 
         {/* pattern labels */}

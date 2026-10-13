@@ -25,11 +25,18 @@
     "dev": "remotion studio",
     "prepare-assets": "bash scripts/sync-assets.sh && bash scripts/check-glyphs.sh && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/make-audio.mjs",
     "footage": "bash scripts/record-footage.sh",
+    "footage:4k": "bash scripts/record-footage.sh --4k",
     "audio": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/make-audio.mjs && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-sync.mjs",
     "render": "bash scripts/render.sh",
+    "render:track": "bash scripts/render-track.sh",
+    "render:cut": "bash scripts/render-cut.sh",
+    "render:formats": "bash scripts/render-cut.sh teaser15 && bash scripts/render-cut.sh cut30 && bash scripts/render-cut.sh vertical",
+    "render:4k": "bash scripts/render-cut.sh master --4k",
     "lint": "eslint src && tsc",
     "music": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/music/compose.mjs",
-    "mux": "bash scripts/render.sh mux"
+    "mux": "bash scripts/render.sh mux",
+    "cues": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/cue-sheet.mjs",
+    "tempo": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/detect-tempo.mjs"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

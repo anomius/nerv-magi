@@ -27,19 +27,73 @@ the FluidR3_GM soundfont (`/usr/share/soundfonts/FluidR3_GM.sf2`, or set `SOUNDF
 | `out/poster.png` | 1920×1080 still |
 | `out/frames/`, `out/contact-sheet*.png` | a keyframe every 2 s, for review |
 
+More cuts, each with the medley, `-sfx-only` and `-silent` versions and a cue sheet (`cues.txt`, `cues.csv`):
+
+| command | output |
+|---|---|
+| `pnpm run render:cut -- teaser15` | `out/formats/teaser15/`: ≈15 s, title card → 可決 → into the dashboard → NERV MAGI (9 bars, 14.4 s) |
+| `pnpm run render:cut -- cut30` | `out/formats/cut30/`: ≈30 s, title → pattern → MAGI → reveal → EMERGENCY → outro (19 bars, 30.4 s) |
+| `pnpm run render:cut -- vertical` | `out/formats/vertical/`: 1080×1920 for Shorts, Reels, TikTok (the full edit, re-laid out) |
+| `pnpm run render:4k` | `out/4k/`: 3840×2160 master for YouTube (4K footage, Remotion `--scale 2`, H.264 High CRF 16) |
+| `pnpm run render:track -- tracks/<name>.json` | `out/tracks/<name>/`: the edit re-timed to your track (below) |
+
+`render:formats` renders the three short/vertical cuts in a row. The short cuts are cut on bar lines
+(`src/edits.ts`); their medley is the score spliced at the same bar lines (4 ms in, 60 ms ring-out), so
+every hit stays on its frame. The vertical lays the 4:5 type out in a 1080×1320 stage between the
+platforms' unsafe bands (no text in the top 220 px or the bottom 380 px); backgrounds bleed to the edges.
+
+## Re-time the edit to your own track
+
+The edit is written once on a 150 BPM grid; a **track map** re-times it to any track. Licensed audio
+stays out of git: put it in `promo/byo-audio/` (ignored).
+
+1. Put the track at `byo-audio/tracks/<name>.wav` (anything ffmpeg reads).
+2. Estimate its grid: `pnpm run tempo -- byo-audio/tracks/<name>.wav --name <name> --out tracks/<name>.json`.
+   It prints BPM, the first downbeat (`offsetSec`) and how sure it is. **It is an estimate**: half or
+   double tempo and a downbeat one beat off are the usual misses.
+3. Confirm by ear, in seconds: `pnpm run render:track -- tracks/<name>.json --audio-only`, then play
+   `out/tracks/<name>/check.wav` (your track with a click on every beat; the high click is the downbeat).
+   Fix `bpm` / `offsetSec` until the high click sits on the bar lines. `cues.txt` lists every hit with
+   its bar and its time in your file.
+4. Optional, `sections`: the bar of your track (bar 1 = `offsetSec`) where each section starts
+   (`title pattern magi reveal flow emergency outro end`; written: 3 5 9 15 25 28 32 37). Omitted ones
+   keep today's proportions, so a bpm-only map works. Put 可決 (`magi` + 4 bars) on a drop, the slam on
+   the last chorus, etc. Sections at their written length keep every hit where it is written; a longer
+   one stretches its choreography (hits on beats), a shorter one (down to half) squeezes it.
+5. Render: `pnpm run render:track -- tracks/<name>.json [master vertical teaser15 cut30]` (≈10 min for
+   the master). Out: `nerv-magi-<name>-sfx-only.mp4` (lay your track under it at −`offsetSec`),
+   `-guide.mp4` (SFX + click), `-preview.mp4` (your track laid in, ducked under the SFX, −14 LUFS:
+   private, never publish licensed music you have not cleared), `click.wav`, `cues.txt`/`cues.csv`.
+
+```json
+{ "name": "my-track", "bpm": 128, "beatsPerBar": 4, "offsetSec": 1.875,
+  "audio": "byo-audio/tracks/my-track.wav", "sections": { "magi": 9, "end": 37 } }
+```
+
+`tracks/house-150.json` is the edit as written (the medley); `example-128.json` (bpm only) and
+`example-140.json` (a longer intro and outro) are made-up maps that show the re-timing. `preflight.mjs`
+checks that the recorded clips are long enough for a map (a slow track plays more of each clip).
+
 ## How it is put together
 
-- **One grid.** `src/timeline.ts`: 150 BPM, 4/4, one beat = 24 frames at 60 fps, one bar = 96.
-  Every cut, flash, vote and wipe is written in bars and beats (`bb(bar, beat)`). The scenes, the
-  MIDI composer and the SFX synth all import it, and `scripts/check-sync.mjs` measures that every
-  scripted hit is an onset in the rendered music on its frame.
+- **One grid.** `src/timeline.ts`: written at 150 BPM, 4/4, one beat = 24 frames at 60 fps, one bar
+  = 96. Every cut, flash, vote and wipe is a bar and beat (`bb(bar, beat)`). `makeTimeline(map)`
+  re-times all of it to a track map (input props `{ track }`; cues rounded to a frame once each, so
+  128 BPM's 28.125 frames a beat never drift; scene-local animation runs on a tempo-scaled clock).
+  The scenes read it from React context (`src/tl.tsx`); the MIDI composer, the SFX synth
+  (`scripts/sfx.mjs`), the click, the cue sheet and `scripts/check-sync.mjs` call it directly, and
+  the sync check measures that every scripted hit is an onset in the rendered music on its frame.
 - **Real footage.** `scripts/record-footage.sh` records clips with `nerv tv --demo --record`
   (headless, fixed 1/60 s clock) and 4K stills with `--snapshot` for sharp push-ins. The demo roster
   is made up. Footage is gitignored and regenerated on demand.
 - **Scenes** (`src/scenes/`): power-on, episode card, pattern detection, MAGI deliberation, the
   reveal (a match cut from the MAGI triad into the product's own MAGI panel, then four callouts),
-  view flow, EMERGENCY, outro. `src/Film.tsx` strings them together; both aspect ratios share the
-  same components and re-lay out the type (`lp(portrait, …)`).
+  view flow, EMERGENCY, outro. `src/Film.tsx` strings them together; every aspect ratio shares the
+  same components and re-lays out the type (`lp(portrait, …)`; 9:16 on a safe-band stage).
+  `src/Cut.tsx` plays bar ranges of the film back to back for the short cuts (`src/edits.ts`).
+- **Checks.** `scripts/verify-cut.mjs <mp4> [--track] [--edit] [--sync]`: streams, frame count, that
+  every hard cut and flash falls on its exact frame (scene-change score), loudness, and the music sync
+  in the audio decoded back out.
 - **Look.** Palette from `src/tv/gfx.rs`, and only the OFL fonts in `../assets/fonts` (copied, never
   symlinked: the repo root is an Omarchy plugin).
 

@@ -1,47 +1,38 @@
 #!/usr/bin/env node
-// Sync check: every scripted hit in src/timeline.ts must be an onset in the rendered music, on the
-// frame. Reads public/audio/music.wav, or the float32 stereo WAV given as the first argument (e.g.
-// the audio decoded back out of the final MP4), measures energy per video frame (1/60 s) and
-// finds the strongest rise within ±6 frames of each cue. Fails if any is off by more than 2.
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-import { T, bb } from "../src/timeline.ts";
+// Sync check: every scripted hit (src/cues.ts) must be an onset in the rendered music, on the frame.
+// Reads public/audio/music.wav, or the WAV given as the first argument (e.g. the audio decoded back
+// out of a final MP4), measures energy per video frame (1/60 s) and finds the strongest rise within
+// ±6 frames of each cue. Fails if any is off by more than 2. With `--track tracks/x.json` the cues
+// come from that map's timeline (e.g. to check a licensed track against its map); with `--edit` they
+// are the hits inside a short cut's ranges, at their place in the cut (and every splice is checked
+// for a click: no sample jump bigger than the music's own).
+//   check-sync.mjs [audio] [--track tracks/x.json] [--edit teaser15|cut30]
+import { join } from "node:path";
+import { cueList } from "../src/cues.ts";
+import { editSegments } from "../src/edits.ts";
+import { PROMO, barBeat, loadTrack } from "./lib/track.mjs";
+import { SR, decode } from "./lib/wav.mjs";
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const buf = readFileSync(process.argv[2] ?? join(ROOT, "public/audio/music.wav"));
-const data = buf.indexOf("data") + 8;
-const SR = buf.readUInt32LE(24);
-const samples = (buf.length - data) / 8;
-const per = SR / T.fps;
+const args = process.argv.slice(2).filter((a) => a !== "--"); // pnpm 10 passes "--" through
+const ti = args.indexOf("--track");
+const trackFile = ti >= 0 ? args.splice(ti, 2)[1] : undefined;
+const ei = args.indexOf("--edit");
+const edit = ei >= 0 ? args.splice(ei, 2)[1] : undefined;
+const { tl } = loadTrack(trackFile);
+const file = args[0] ?? join(PROMO, "public/audio/music.wav");
+const { L, R } = decode(file);
+const samples = L.length;
+const per = SR / tl.fps;
 const energy = [];
 for (let f = 0; f * per < samples; f++) {
   let e = 0;
-  for (let i = Math.floor(f * per); i < Math.min(samples, Math.floor((f + 1) * per)); i++) {
-    const l = buf.readFloatLE(data + i * 8);
-    const r = buf.readFloatLE(data + i * 8 + 4);
-    e += l * l + r * r;
-  }
+  for (let i = Math.floor(f * per); i < Math.min(samples, Math.floor((f + 1) * per)); i++) e += L[i] * L[i] + R[i] * R[i];
   energy.push(Math.sqrt(e / per));
 }
-const cues = {
-  "title smash (bar 3)": T.scenes.title[0],
-  "smash out (bar 5)": T.title.out,
-  "MAGI draw (bar 9)": T.magi.draw,
-  "vote MELCHIOR (bar 10)": T.magi.votes[0],
-  "vote BALTHASAR (bar 11)": T.magi.votes[1],
-  "vote CASPER (bar 12)": T.magi.votes[2],
-  "可決 3/3 (bar 13)": T.magi.carried,
-  "reveal push (bar 15)": T.reveal.push,
-  "LOAD wipe (bar 25)": T.flow.load,
-  "SYNC roll (bar 26)": T.flow.sync,
-  "MAIN dissolve (bar 27)": T.flow.main,
-  "EMERGENCY (bar 28)": T.emergency.takeover,
-  "NOMINAL (bar 31)": T.emergency.resolve,
-  "NERV MAGI slam (bar 34.3)": T.outro.slam,
-};
 let bad = 0;
-for (const [name, at] of Object.entries(cues)) {
+const segs = edit ? editSegments(tl, edit) : [{ from: 0, to: tl.total + 1, at: 0 }];
+const hits = segs.flatMap((s) => cueList(tl).filter((c) => c.hit && c.at >= s.from && c.at < s.to).map((c) => ({ ...c, src: c.at, at: s.at + c.at - s.from })));
+for (const { at, src, hit } of hits) {
   let best = 0;
   let off = 0;
   for (let d = -6; d <= 6; d++) {
@@ -51,9 +42,23 @@ for (const [name, at] of Object.entries(cues)) {
   }
   const ok = Math.abs(off) <= 2;
   bad += ok ? 0 : 1;
-  console.log(`${ok ? "ok  " : "OFF "} ${name.padEnd(28)} frame ${String(at).padStart(4)}  onset ${off >= 0 ? "+" : ""}${off} f  rise ${best.toFixed(3)}`);
+  console.log(`${ok ? "ok  " : "OFF "} ${`${hit} (bar ${barBeat(tl, src)})`.padEnd(30)} frame ${String(at).padStart(4)}  onset ${off >= 0 ? "+" : ""}${off} f  rise ${best.toFixed(3)}`);
 }
-const tail = energy.slice(T.outro.cut + 1, T.total).reduce((m, e) => Math.max(m, e), 0);
-console.log(`after the cut (bar ${(T.outro.cut / T.bar + 1).toFixed(1)}): max rms ${tail.toExponential(1)}${process.argv[2] ? "" : " (music stem; the mix gates it to 0)"}`);
+// splices: the biggest sample-to-sample jump within ±2 ms of each, against the file's 99.9th percentile
+if (edit) {
+  const jumps = [];
+  for (let i = 1; i < samples; i++) jumps.push(Math.max(Math.abs(L[i] - L[i - 1]), Math.abs(R[i] - R[i - 1])));
+  const p999 = [...jumps].sort((a, b) => a - b)[Math.floor(jumps.length * 0.999)];
+  for (const s of segs.slice(1)) {
+    const c = s.at * per;
+    const j = Math.max(...jumps.slice(c - 96, c + 96));
+    const ok = j <= p999 * 1.5;
+    bad += ok ? 0 : 1;
+    console.log(`${ok ? "ok  " : "CLICK"} splice at frame ${s.at} (from bar ${barBeat(tl, s.from)}): max jump ${j.toFixed(4)} (file p99.9 ${p999.toFixed(4)})`);
+  }
+}
+const cutAt = segs.at(-1).at + tl.outro.cut - segs.at(-1).from;
+const tail = energy.slice(cutAt + 1, segs.at(-1).at + Math.min(tl.total, segs.at(-1).to) - segs.at(-1).from).reduce((m, e) => Math.max(m, e), 0);
+console.log(`after the hard cut (frame ${cutAt}): max rms ${tail.toExponential(1)}${args[0] ? "" : " (music stem; the mix gates it to 0)"}`);
 console.log(bad ? `sync: ${bad} cue(s) off the grid` : "sync: every cue lands within 2 frames");
 process.exit(bad ? 1 : 0);

@@ -47,7 +47,7 @@ if want 4x5; then
   bash scripts/finish.sh "$WORK/4x5-video.mp4" public/audio/score.wav "$OUT/nerv-magi-x-4x5.mp4" 5500
 fi
 # the loop's soundtrack: 7 s of the march from bar 17 (the callouts it shows), faded at the seam
-LOOP_FROM=$("${NODE[@]}" --input-type=module -e 'import { bb } from "./src/timeline.ts"; console.log(bb(17) / 60)')
+LOOP_FROM=$("${NODE[@]}" --input-type=module -e 'import { T } from "./src/timeline.ts"; console.log(T.bb(17) / T.fps)')
 if want hero; then
   remotion HeroLoop "$WORK/hero-video.mp4" "${mute[@]}"
   bash scripts/finish.sh "$WORK/hero-video.mp4" - "$OUT/hero-loop-silent.mp4" 7000

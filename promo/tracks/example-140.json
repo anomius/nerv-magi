@@ -1,0 +1,8 @@
+{
+  "name": "example-140",
+  "bpm": 140,
+  "beatsPerBar": 4,
+  "offsetSec": 0.43,
+  "audio": "byo-audio/tracks/example-140.wav",
+  "sections": { "title": 5, "outro": 34, "end": 41 }
+}

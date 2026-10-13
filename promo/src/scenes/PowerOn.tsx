@@ -1,37 +1,41 @@
 import React from "react";
-import { AbsoluteFill, Sequence, interpolate, staticFile, useCurrentFrame } from "remotion";
+import { AbsoluteFill, Sequence, interpolate, useCurrentFrame } from "remotion";
 import { Video } from "@remotion/media";
 import { C, F, glow } from "../theme";
-import { T, hash } from "../timeline";
+import { hash } from "../timeline";
+import { useFootage, useTL } from "../tl";
+import { CLIP } from "../footage";
 import { CaFilter, Mono, OUT, Typed, caText, clamp } from "../fx";
 import { lp, useLayout } from "../layout";
-
-const B = T.boot;
 
 /** 0:00-0:03 CRT line opens, amber hairline, boot text types, real BOOT footage, 起動 flash. */
 export const PowerOn: React.FC = () => {
   const f = useCurrentFrame();
-  const { w, h, fps, portrait } = useLayout();
+  const tl = useTL();
+  const B = tl.boot;
+  const { d } = tl;
+  const footage = useFootage();
+  const { w, h, fps, portrait, bleed } = useLayout();
   const line = B.crt;
   // CRT: a white dot stretches to a line, flares open, collapses into the amber hairline
-  const lineW = interpolate(f, [line, line + 10], [0, 1], { ...clamp, easing: OUT });
-  const open = interpolate(f, [line + 9, line + 12, line + 19], [0, 1, 0], clamp);
+  const lineW = interpolate(f, [line, line + d(10)], [0, 1], { ...clamp, easing: OUT });
+  const open = interpolate(f, [line + d(9), line + d(12), line + d(19)], [0, 1, 0], clamp);
   const hairY = lp(portrait, h * 0.56, h * 0.55);
-  const amber = interpolate(f, [line + 16, line + 26], [0, 1], clamp);
+  const amber = interpolate(f, [line + d(16), line + d(26)], [0, 1], clamp);
   const typeSize = lp(portrait, 54, 64);
   const linked = f >= B.linked;
   // the hairline splits open onto the real BOOT view
-  const split = interpolate(f, [B.footage, B.footage + 10], [0, 1], { ...clamp, easing: OUT });
+  const split = interpolate(f, [B.footage, B.footage + d(10)], [0, 1], { ...clamp, easing: OUT });
   const kanji = f >= B.kanji;
-  const k = f - B.kanji;
+  const k = tl.k(f - B.kanji);
   const kScale = kanji ? interpolate(k, [0, 6, 28], [1.35, 1, 0.94], clamp) : 1;
   const kFlicker = kanji && (k < 2 || (k > 10 && k < 12) || (k > 20 && hash(f) > 0.5));
-  const dots = Math.max(0, Math.min(5, Math.floor((f - (B.lines[1].at + B.lines[1].text.length * B.lines[1].fpc)) / 3)));
+  const dots = Math.max(0, Math.min(5, Math.floor(tl.k(f - (B.lines[1].at + B.lines[1].text.length * B.lines[1].fpc)) / 3)));
 
   return (
     <AbsoluteFill style={{ backgroundColor: C.black }}>
       {/* real BOOT footage, behind the split */}
-      <Sequence name="BOOT footage" from={B.footage - 2} premountFor={fps}>
+      <Sequence name="BOOT footage" from={Math.round(B.footage - d(2))} premountFor={fps}>
         <AbsoluteFill
           style={{
             clipPath: `inset(${(1 - split) * 50}% 0 ${(1 - split) * 50}% 0)`,
@@ -39,8 +43,8 @@ export const PowerOn: React.FC = () => {
           }}
         >
           <Video
-            src={staticFile("footage/boot.mp4")}
-            trimBefore={Math.round(2.4 * fps)}
+            src={footage("boot.mp4")}
+            trimBefore={CLIP.bootIn}
             muted
             style={{
               position: "absolute",
@@ -48,7 +52,7 @@ export const PowerOn: React.FC = () => {
               height: 1080,
               left: 0,
               top: lp(portrait, 135, 0),
-              scale: String(interpolate(f, [B.footage, 180], [lp(portrait, 1.05, 1.4), lp(portrait, 1.16, 1.55)], clamp)),
+              scale: String(interpolate(f, [B.footage, tl.bb(2, 4, 12)], [lp(portrait, 1.05, 1.4), lp(portrait, 1.16, 1.55)], clamp)),
               transformOrigin: "0% 32%",
             }}
           />
@@ -78,7 +82,7 @@ export const PowerOn: React.FC = () => {
       ) : null}
 
       {/* boot text */}
-      {f < B.footage + 6 ? (
+      {f < B.footage + d(6) ? (
         <AbsoluteFill style={{ opacity: f < B.footage ? 1 : 1 - split }}>
           <div
             style={{
@@ -107,7 +111,7 @@ export const PowerOn: React.FC = () => {
             color={C.orange}
             style={{ position: "absolute", left: lp(portrait, 70, 170), top: hairY + 22, opacity: amber * 0.85 }}
           >
-            {`MELCHIOR-1 ${f > 60 ? "OK" : ".."}   BALTHASAR-2 ${f > 80 ? "OK" : ".."}   CASPER-3 ${f > 100 ? "OK" : ".."}`}
+            {`MELCHIOR-1 ${tl.k(f) > 60 ? "OK" : ".."}   BALTHASAR-2 ${tl.k(f) > 80 ? "OK" : ".."}   CASPER-3 ${tl.k(f) > 100 ? "OK" : ".."}`}
           </Mono>
           <Mono size={22} color={C.orange} style={{ position: "absolute", right: lp(portrait, 70, 170), top: hairY + 22, opacity: amber * 0.6 }}>
             {portrait ? "" : `NERV · TERMINAL 01 · ${String(Math.floor(f * 16.7)).padStart(5, "0")}`}
@@ -117,7 +121,8 @@ export const PowerOn: React.FC = () => {
 
       {/* 起動 */}
       {kanji ? (
-        <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", backgroundColor: kFlicker ? "rgba(255,0,0,0.25)" : undefined }}>
+        <AbsoluteFill style={{ alignItems: "center", justifyContent: "center" }}>
+          {kFlicker ? <div style={{ position: "absolute", left: 0, right: 0, top: -bleed.top, bottom: -bleed.bottom, backgroundColor: "rgba(255,0,0,0.25)" }} /> : null}
           <div
             style={{
               fontFamily: F.serif,

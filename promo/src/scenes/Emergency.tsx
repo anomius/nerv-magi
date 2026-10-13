@@ -1,24 +1,27 @@
 import React from "react";
-import { AbsoluteFill, Sequence, interpolate, staticFile, useCurrentFrame } from "remotion";
+import { AbsoluteFill, Sequence, interpolate, useCurrentFrame } from "remotion";
 import { Video } from "@remotion/media";
 import { C, F, glow } from "../theme";
-import { T, hash } from "../timeline";
+import { hash } from "../timeline";
+import { useFootage, useTL } from "../tl";
+import { CLIP } from "../footage";
 import { CaFilter, Hazard, Mono, OUT, beatShake, caText, clamp } from "../fx";
 import { lp, useLayout } from "../layout";
 import { type Key, Shot, camAt, rectToScreen } from "../camera";
 import { Callout } from "../callout";
 
-const S = T.scenes.emergency[0];
-const E = T.emergency;
 const CARD = { x: 60, y: 335, w: 900, h: 430 };
-const TAKEOVER_IN_CLIP = 84; // frame of emergency.mp4 where the red takeover starts
-const WIPE_IN_CLIP = 183; // frame of resolve.mp4 where MAIN wipes back in
 
 /** 0:42-0:48 EMERGENCY: the real takeover, flashing type, hazard tape, shake on the beat, then NOMINAL. */
 export const Emergency: React.FC = () => {
   const frame = useCurrentFrame();
+  const tl = useTL();
+  const footage = useFootage();
+  const S = tl.scenes.emergency[0];
+  const E = tl.emergency;
+  const { d } = tl;
   const f = frame + S;
-  const { w, h, fps, portrait } = useLayout();
+  const { w, h, fps, portrait, tall, bleed } = useLayout();
   const wide = portrait ? { zoom: 0.74, fx: 960, fy: 540, ax: 540, ay: 600 } : { zoom: 1, fx: 960, fy: 540, ax: 960, ay: 540 };
   const card = portrait
     ? { zoom: 1.12, fx: CARD.x + CARD.w / 2, fy: CARD.y + CARD.h / 2, ax: 540, ay: 470 }
@@ -26,46 +29,47 @@ export const Emergency: React.FC = () => {
   const keys: Key[] = [
     { f: S, ...wide },
     { f: E.card, ...wide, zoom: wide.zoom * 1.02 },
-    { f: E.card + 24, ...card },
-    { f: E.clear - 2, ...card, zoom: card.zoom * 1.06 },
+    { f: E.card + d(24), ...card },
+    { f: E.clear - d(2), ...card, zoom: card.zoom * 1.06 },
     { f: E.clear, ...wide },
   ];
   const cam = camAt(keys, f);
   const alarm = f < E.clear;
-  const shake = alarm ? beatShake(f, S, E.clear, T.beat, lp(portrait, 26, 20)) : { x: 0, y: 0 };
-  const beatK = (f - S) % T.beat;
+  const shake = alarm ? beatShake(f, S, E.clear, tl.beat, lp(portrait, 26, 20)) : { x: 0, y: 0 };
+  // the track's beat, in canonical frames since it fell
+  const beatK = tl.k(tl.sinceBeat(f));
   const pulse = alarm ? Math.max(0, 1 - beatK / 12) : 0;
-  const typeOn = f >= E.takeover + 4 && f < E.card + 10;
-  const tk = f - E.takeover - 4;
+  const typeOn = f >= E.takeover + d(4) && f < E.card + d(10);
+  const tk = tl.k(f - E.takeover) - 4;
   const word = Math.floor(tk / 12) % 2 === 0;
   const resolved = f >= E.resolve;
-  const rk = f - E.resolve;
-  const line = interpolate(f, [E.line, E.line + 12], [0, 1], { ...clamp, easing: OUT });
-  const lineOpen = interpolate(f, [E.line + 12, T.scenes.emergency[1]], [0, 1], { ...clamp, easing: OUT });
+  const rk = tl.k(f - E.resolve);
+  const line = interpolate(f, [E.line, E.line + d(12)], [0, 1], { ...clamp, easing: OUT });
+  const lineOpen = interpolate(f, [E.line + d(12), tl.scenes.emergency[1]], [0, 1], { ...clamp, easing: OUT });
 
   return (
-    <AbsoluteFill style={{ backgroundColor: "#000", overflow: "hidden" }}>
+    <AbsoluteFill style={{ backgroundColor: "#000", overflow: tall ? "visible" : "hidden" }}>
       <CaFilter id="ca-em" px={8} />
       <AbsoluteFill style={{ translate: `${shake.x}px ${shake.y}px`, filter: alarm && beatK < 3 ? "url(#ca-em)" : undefined }}>
         <Sequence name="EMERGENCY footage" durationInFrames={E.clear - S} premountFor={fps}>
           <Shot cam={cam}>
-            <Video src={staticFile("footage/emergency.mp4")} trimBefore={TAKEOVER_IN_CLIP - (E.takeover - S)} muted style={{ position: "absolute", width: 1920, height: 1080 }} />
+            <Video src={footage("emergency.mp4")} trimBefore={CLIP.takeover - (E.takeover - S)} muted style={{ position: "absolute", width: 1920, height: 1080 }} />
           </Shot>
         </Sequence>
         <Sequence name="Resolve footage" from={E.clear - S} premountFor={fps}>
           <Shot cam={cam}>
-            <Video src={staticFile("footage/resolve.mp4")} trimBefore={WIPE_IN_CLIP - (E.resolve - E.clear)} muted style={{ position: "absolute", width: 1920, height: 1080 }} />
+            <Video src={footage("resolve.mp4")} trimBefore={CLIP.wipeBack - (E.resolve - E.clear)} muted style={{ position: "absolute", width: 1920, height: 1080 }} />
           </Shot>
         </Sequence>
         {/* red pulse on every beat */}
-        <AbsoluteFill style={{ backgroundColor: C.red, mixBlendMode: "screen", opacity: pulse * 0.32 }} />
+        <AbsoluteFill style={{ top: -bleed.top, bottom: -bleed.bottom, backgroundColor: C.red, mixBlendMode: "screen", opacity: pulse * 0.32 }} />
       </AbsoluteFill>
 
       {/* hazard tape */}
       {alarm ? (
         <>
-          <Hazard style={{ left: 0, right: 0, top: 0, height: lp(portrait, 54, 46) }} color={C.red} stripe={34} speed={7} />
-          <Hazard style={{ left: 0, right: 0, bottom: 0, height: lp(portrait, 54, 46) }} color={C.red} stripe={34} speed={-7} />
+          <Hazard style={{ left: 0, right: 0, top: -bleed.top, height: lp(portrait, 54, 46) }} color={C.red} stripe={34} speed={7} />
+          <Hazard style={{ left: 0, right: 0, bottom: -bleed.bottom, height: lp(portrait, 54, 46) }} color={C.red} stripe={34} speed={-7} />
         </>
       ) : null}
 
@@ -110,12 +114,12 @@ export const Emergency: React.FC = () => {
                 const r = rectToScreen(cam, CARD);
                 return { left: r.x - 10, top: r.y - 10, width: r.w + 20, height: r.h + 20 };
               })(),
-              boxShadow: `0 0 0 3000px rgba(0,0,0,${0.62 * interpolate(f, [E.card + 10, E.card + 26], [0, 1], clamp)})`,
+              boxShadow: `0 0 0 3000px rgba(0,0,0,${0.62 * interpolate(f, [E.card + d(10), E.card + d(26)], [0, 1], clamp)})`,
             }}
           />
           <Callout
             rect={rectToScreen(cam, CARD)}
-            k={f - E.card}
+            k={tl.k(f - E.card)}
             index="BLOCKED · 03s"
             kanji="入力要求"
             title="BLOCKED PILOT"
@@ -163,7 +167,7 @@ export const Emergency: React.FC = () => {
       {/* hand-off: a green line opens into the outro */}
       {f >= E.line ? (
         <>
-          <AbsoluteFill style={{ backgroundColor: "#000", clipPath: `inset(${50 - lineOpen * 50}% 0 ${50 - lineOpen * 50}% 0)` }} />
+          <AbsoluteFill style={{ top: -bleed.top, bottom: -bleed.bottom, backgroundColor: "#000", clipPath: `inset(${50 - lineOpen * 50}% 0 ${50 - lineOpen * 50}% 0)` }} />
           <div
             style={{
               position: "absolute",

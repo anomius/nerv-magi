@@ -1,0 +1,7 @@
+{
+  "name": "house-150",
+  "bpm": 150,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "sections": { "title": 3, "pattern": 5, "magi": 9, "reveal": 15, "flow": 25, "emergency": 28, "outro": 32, "end": 37 }
+}

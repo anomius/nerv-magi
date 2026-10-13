@@ -1,23 +1,23 @@
 import React from "react";
 import { AbsoluteFill, Easing, interpolate, useCurrentFrame } from "remotion";
 import { C, F, glow } from "../theme";
-import { T, hash } from "../timeline";
+import { hash, type Timeline } from "../timeline";
+import { useTL } from "../tl";
 import { Hazard, Mono, OUT, Typed, beatShake, caText, clamp, hexPath } from "../fx";
 import { lp, useLayout } from "../layout";
 import { Links, TRIAD, Unit, VOTE_ORDER, type Vote } from "../magi";
 
-const S = T.scenes.magi[0];
-const M = T.magi;
-
 export const magiScale = (portrait: boolean) => (portrait ? 2.9 : 3);
-export const magiOrigin = (portrait: boolean) => (portrait ? { x: 540, y: 770 } : { x: 960, y: 540 });
+/** Centre of the triad; in portrait it keeps its distance from the frame's (or the 9:16 stage's) bottom. */
+export const magiOrigin = (portrait: boolean, h: number) => (portrait ? { x: 540, y: 770 - (1350 - h) } : { x: 960, y: 540 });
 
-/** Vote state of unit `u` at absolute frame `f`. */
-export const voteState = (u: number, f: number): { state: Vote; since: number } => {
+/** Vote state of unit `u` at absolute frame `f` (`since` in canonical frames). */
+export const voteState = (tl: Timeline, u: number, f: number): { state: Vote; since: number } => {
+  const M = tl.magi;
   const k = VOTE_ORDER.indexOf(u as 0 | 1 | 2);
   const at = M.votes[k];
-  if (f >= at) return { state: "approved", since: f - at };
-  if (f >= M.deliberate) return { state: "deliberating", since: f - M.deliberate };
+  if (f >= at) return { state: "approved", since: tl.k(f - at) };
+  if (f >= M.deliberate) return { state: "deliberating", since: tl.k(f - M.deliberate) };
   return { state: "idle", since: 0 };
 };
 
@@ -26,34 +26,40 @@ const HEADER = ["CODE      : 473", "FILE      : MAGI_SYS", "EXTENSION : 3023", "
 /** 0:13-0:22 MAGI deliberation: three units, 審議中, then 承認 one by one, 可決 3/3. */
 export const Magi: React.FC = () => {
   const frame = useCurrentFrame();
+  const tl = useTL();
+  const S = tl.scenes.magi[0];
+  const M = tl.magi;
+  const { d } = tl;
   const f = frame + S;
-  const { w, h, portrait } = useLayout();
+  const { w, h, portrait, tall, bleed } = useLayout();
   const s = magiScale(portrait);
-  const o = magiOrigin(portrait);
+  const o = magiOrigin(portrait, h);
   const approvedN = M.votes.filter((v) => f >= v).length;
   const carried = f >= M.carried;
-  const ck = f - M.carried;
+  const ck = tl.k(f - M.carried);
   // the hub hex from the dive shrinks onto the MAGI core
   const core = { x: o.x + (TRIAD.magi.x - TRIAD.center.x) * s, y: o.y + (TRIAD.magi.y - TRIAD.center.y) * s };
   // the pattern dive ends with the hub hex at ~9x its 94 px radius, centred at y 640 (landscape)
-  const hexR = interpolate(f, [S, S + 22], [lp(portrait, 900, 846), 34 * s], { ...clamp, easing: OUT });
-  const hexY = interpolate(f, [S, S + 22], [lp(portrait, 700, 640), core.y], { ...clamp, easing: OUT });
-  const links = interpolate(f, [S + 12, S + 60], [0, 1], { ...clamp, easing: OUT });
+  const hexR = interpolate(f, [S, S + d(22)], [lp(portrait, 900, 846), 34 * s], { ...clamp, easing: OUT });
+  const hexY = interpolate(f, [S, S + d(22)], [lp(portrait, 700, 640), core.y], { ...clamp, easing: OUT });
+  const links = interpolate(f, [S + d(12), S + d(60)], [0, 1], { ...clamp, easing: OUT });
   const riser = interpolate(f, [M.riser[0], M.riser[1]], [0, 1], { ...clamp, easing: Easing.in(Easing.quad) });
-  const shake = beatShake(f, M.carried, M.carried + 12, 30, 16);
+  const shake = beatShake(f, M.carried, M.carried + d(12), 30, 16);
   const voteShake = M.votes.reduce((acc, v) => {
-    const b = beatShake(f, v, v + 8, 30, 7);
+    const b = beatShake(f, v, v + d(8), 30, 7);
     return { x: acc.x + b.x, y: acc.y + b.y };
   }, shake);
   const linkColor = approvedN === 3 ? C.green : C.orange;
-  const bannerOut = interpolate(f, [M.riser[1] - 14, M.riser[1] - 4], [0, 1], { ...clamp, easing: Easing.in(Easing.cubic) });
+  const bannerOut = interpolate(f, [M.riser[1] - d(14), M.riser[1] - d(4)], [0, 1], { ...clamp, easing: Easing.in(Easing.cubic) });
 
   return (
-    <AbsoluteFill style={{ backgroundColor: "#000", overflow: "hidden" }}>
+    <AbsoluteFill style={{ backgroundColor: "#000", overflow: tall ? "visible" : "hidden" }}>
       <AbsoluteFill style={{ translate: `${voteShake.x}px ${voteShake.y}px` }}>
         {/* faint field grid */}
         <AbsoluteFill
           style={{
+            top: -bleed.top,
+            bottom: -bleed.bottom,
             opacity: 0.22,
             backgroundImage: `linear-gradient(rgba(255,153,0,0.35) 1px, transparent 1px), linear-gradient(90deg, rgba(255,153,0,0.35) 1px, transparent 1px)`,
             backgroundSize: "60px 60px",
@@ -79,14 +85,14 @@ export const Magi: React.FC = () => {
               letterSpacing: 2.5 * s,
               color: approvedN === 3 ? C.green : C.amber,
               textShadow: glow(approvedN === 3 ? C.green : C.amber, 8 * s),
-              opacity: interpolate(f, [S + 10, S + 22], [0, 1], clamp),
+              opacity: interpolate(f, [S + d(10), S + d(22)], [0, 1], clamp),
             }}
           >
             MAGI
           </div>
           {TRIAD.units.map((u, i) => {
-            const v = voteState(i, f);
-            const draw = interpolate(f, [S + 20 + i * 8, S + 34 + i * 8], [0, 1], clamp);
+            const v = voteState(tl, i, f);
+            const draw = interpolate(f, [S + d(20 + i * 8), S + d(34 + i * 8)], [0, 1], clamp);
             const flick = draw < 1 && hash(f + i) > 0.5 ? 0.3 : 1;
             return (
               <Unit
@@ -109,14 +115,14 @@ export const Magi: React.FC = () => {
           <Mono size={lp(portrait, 30, 38)} color={C.orange} style={{ lineHeight: 1.32, textShadow: glow(C.orange, 8) }}>
             {HEADER.map((line, k) => (
               <div key={k}>
-                <Typed text={line} at={8 + k * 9} fpc={1} cursor={false} />
+                <Typed text={line} at={d(8 + k * 9)} fpc={d(1)} cursor={false} />
               </div>
             ))}
           </Mono>
         </div>
 
         {/* deliberation meter and timer (landscape side columns) */}
-        {!portrait && f >= M.deliberate - 10 ? (
+        {!portrait && f >= M.deliberate - d(10) ? (
           <>
             <div style={{ position: "absolute", left: 56, top: 430, width: 400 }}>
               <div style={{ display: "flex", alignItems: "baseline", gap: 14, marginBottom: 10 }}>
@@ -152,7 +158,7 @@ export const Magi: React.FC = () => {
                 }}
               >
                 {(() => {
-                  const t = Math.max(0, (Math.min(f, M.carried) - M.deliberate) / 60);
+                  const t = Math.max(0, (Math.min(f, M.carried) - M.deliberate) / tl.fps);
                   return `${String(Math.floor(t)).padStart(2, "0")}:${String(Math.floor((t % 1) * 100)).padStart(2, "0")}`;
                 })()}
               </div>
@@ -171,7 +177,7 @@ export const Magi: React.FC = () => {
               right: lp(portrait, 40, 56),
               top: lp(portrait, 44, 66),
               textAlign: "right",
-              translate: `${interpolate(f, [M.motion, M.motion + 8], [60, 0], { ...clamp, easing: OUT })}px 0px`,
+              translate: `${interpolate(f, [M.motion, M.motion + d(8)], [60, 0], { ...clamp, easing: OUT })}px 0px`,
             }}
           >
             <span
@@ -184,7 +190,7 @@ export const Magi: React.FC = () => {
                 fontSize: lp(portrait, 92, 104),
                 color: "#fff",
                 lineHeight: 1.1,
-                textShadow: caText(f - M.motion < 6 ? 8 : 0),
+                textShadow: caText(tl.k(f - M.motion) < 6 ? 8 : 0),
               }}
             >
               提訴

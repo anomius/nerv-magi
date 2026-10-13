@@ -1,11 +1,9 @@
 import React from "react";
 import { AbsoluteFill, interpolate, useCurrentFrame } from "remotion";
 import { F } from "../theme";
-import { T } from "../timeline";
+import { useTL } from "../tl";
 import { clamp, jitter } from "../fx";
 import { useLayout } from "../layout";
-
-const S = T.scenes.title[0];
 
 /** White serif on black, condensed, laid out as a broken L: the episode card homage. */
 const Word: React.FC<{ children: React.ReactNode; style: React.CSSProperties; squeeze?: number }> = ({ children, style, squeeze = 0.84 }) => (
@@ -30,11 +28,13 @@ const Word: React.FC<{ children: React.ReactNode; style: React.CSSProperties; sq
 /** 0:03-0:07 第壱話 / エージェント、襲来 / EPISODE:1 AGENT ATTACK. Smash cut in and out. */
 export const Title: React.FC = () => {
   const frame = useCurrentFrame();
+  const tl = useTL();
+  const S = tl.scenes.title[0];
   const f = frame + S;
   const { portrait } = useLayout();
-  const push = interpolate(frame, [0, 240], [1, 1.035], clamp);
-  const j = jitter(f, S, 5, 22);
-  const sub = f >= T.title.sub;
+  const push = interpolate(frame, [0, tl.d(240)], [1, 1.035], clamp);
+  const j = jitter(f, S, tl.d(5), 22);
+  const sub = f >= tl.title.sub;
   return (
     <AbsoluteFill style={{ backgroundColor: "#000" }}>
       <AbsoluteFill style={{ scale: String(push), translate: `${j}px 0px` }}>

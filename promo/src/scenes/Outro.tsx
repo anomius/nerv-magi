@@ -1,30 +1,32 @@
 import React from "react";
-import { AbsoluteFill, Img, interpolate, staticFile, useCurrentFrame } from "remotion";
+import { AbsoluteFill, Img, interpolate, useCurrentFrame } from "remotion";
 import { C, F, REPO_URL, glow } from "../theme";
-import { T } from "../timeline";
+import { useFootage, useTL } from "../tl";
 import { Hazard, OUT, Typed, caText, clamp, hexCells, hexPath, jitter } from "../fx";
 import { lp, useLayout } from "../layout";
-
-const S = T.scenes.outro[0];
-const O = T.outro;
 
 /** 0:48-0:56 NERV MAGI, what it is, where to get it; smash cut to black: つづく. */
 export const Outro: React.FC = () => {
   const frame = useCurrentFrame();
+  const tl = useTL();
+  const footage = useFootage();
+  const S = tl.scenes.outro[0];
+  const O = tl.outro;
   const f = frame + S;
-  const { w, h, portrait } = useLayout();
-  const sk = f - O.slam;
+  const fk = tl.k(frame); // the scene's clock in canonical frames
+  const { w, h, portrait, tall, bleed } = useLayout();
+  const sk = tl.k(f - O.slam);
   const slam = interpolate(sk, [0, 7], [1.5, 1], { ...clamp, easing: OUT });
   const cut = f >= O.cut;
-  const cells = hexCells(w, h, 64);
-  const j = jitter(f, O.slam, 6, 30);
+  const cells = hexCells(w, h + bleed.top + bleed.bottom, 64, 0, -bleed.top);
+  const j = jitter(f, O.slam, tl.d(6), 30);
   // before the slam the lines sit centred; the title pushes them down into place
   const pushP = interpolate(sk, [0, 8], [0, 1], { ...clamp, easing: OUT });
   const push = -(1 - pushP) * lp(portrait, 250, 215);
-  const lineIn = (i: number) => interpolate(f, [O.lines[i], O.lines[i] + 10], [0, 1], { ...clamp, easing: OUT });
+  const lineIn = (i: number) => interpolate(f, [O.lines[i], O.lines[i] + tl.d(10)], [0, 1], { ...clamp, easing: OUT });
 
   if (cut) {
-    const k = f - O.cut;
+    const k = tl.k(f - O.cut);
     return (
       <AbsoluteFill style={{ backgroundColor: "#000" }}>
         {k >= 8 ? (
@@ -49,10 +51,10 @@ export const Outro: React.FC = () => {
   }
 
   return (
-    <AbsoluteFill style={{ backgroundColor: "#000", overflow: "hidden" }}>
+    <AbsoluteFill style={{ backgroundColor: "#000", overflow: tall ? "visible" : "hidden" }}>
       {/* the dashboard, far behind */}
       <Img
-        src={staticFile("footage/main-4k.png")}
+        src={footage("main-4k.png")}
         style={{
           position: "absolute",
           width: 1920,
@@ -61,10 +63,10 @@ export const Outro: React.FC = () => {
           top: (h - 1080) / 2,
           opacity: 0.16,
           filter: "blur(3px) saturate(0.6)",
-          scale: String(lp(portrait, 1.25, 1.5) + frame * 0.0004),
+          scale: String(lp(portrait, tall ? 2 : 1.25, 1.5) + fk * 0.0004),
         }}
       />
-      <svg width={w} height={h} style={{ position: "absolute" }}>
+      <svg width={w} height={h} style={{ position: "absolute", overflow: tall ? "visible" : undefined }}>
         {cells.map((c, k) => (
           <path
             key={k}
@@ -76,10 +78,10 @@ export const Outro: React.FC = () => {
           />
         ))}
       </svg>
-      <Hazard style={{ left: 0, right: 0, top: 0, height: 22 }} speed={2} />
-      <Hazard style={{ left: 0, right: 0, bottom: 0, height: 22 }} speed={-2} />
+      <Hazard style={{ left: 0, right: 0, top: -bleed.top, height: 22 }} speed={2} />
+      <Hazard style={{ left: 0, right: 0, bottom: -bleed.bottom, height: 22 }} speed={-2} />
 
-      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", translate: `${j}px 0px`, scale: String(1 + frame * 0.00012) }}>
+      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", translate: `${j}px 0px`, scale: String(1 + fk * 0.00012) }}>
         <div style={{ textAlign: "center", marginTop: lp(portrait, -80, -40) }}>
           <div style={{ opacity: sk >= 0 ? 1 : 0 }}>
           <div style={{ fontFamily: F.serif, fontWeight: 900, fontSize: lp(portrait, 44, 62), color: C.orange, letterSpacing: lp(portrait, 6, 18), whiteSpace: "nowrap", opacity: sk > 4 ? 1 : 0 }}>
@@ -170,7 +172,7 @@ export const Outro: React.FC = () => {
               opacity: f >= O.lines[2] ? 1 : 0,
             }}
           >
-            <Typed text={REPO_URL} at={O.lines[2] - S} fpc={2} />
+            <Typed text={REPO_URL} at={O.lines[2] - S} fpc={tl.d(2)} />
           </div>
           </div>
         </div>
