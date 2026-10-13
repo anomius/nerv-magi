@@ -192,8 +192,8 @@ Plugins run unsandboxed inside the Omarchy shell, so here is everything this one
 - **Files it writes:** `~/.local/bin/nerv`, `~/.cache/nerv-magi/`, and `nerv-tv.pid`, `nerv-tv.cmd` and
   `nerv-cava.conf` in `$XDG_RUNTIME_DIR`. *Cast to TV* also starts a transient user unit
   (`nerv-tv-cast-watch`) that closes the dashboard when the TV goes away.
-- **It never** uses sudo, edits Hyprland or shell configuration, or touches herdr, the agents or their
-  logs (read-only).
+- **It needs** no root privileges, never edits Hyprland or shell configuration, and only reads herdr,
+  the agents and their logs.
 
 ## Uninstall
 
@@ -203,6 +203,20 @@ herdr plugin uninstall nerv.magi              # or: herdr plugin unlink nerv.mag
 rm -f ~/.local/bin/nerv
 rm -rf ~/.cache/nerv-magi ~/.config/nerv      # build cache and your config (optional)
 ```
+
+## Contributing
+
+Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the setup, the layout of
+the code and the checks to run. In short:
+
+```bash
+cargo build --release && target/release/nerv tv --demo --windowed   # hack on it with made-up data
+cargo fmt && cargo test --release                                   # before you push
+nerv tv --demo --scene main --size 1920x1080 --frames 900 --snapshot main.png   # before/after renders
+```
+
+Keep it local-first (no network, read-only towards herdr and the agents), keep real data out of
+screenshots and fixtures, and keep Eva an homage (no material from the series).
 
 ## Credits
 

@@ -6,7 +6,7 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$ROOT"
 say() { printf '\033[38;2;255;153;0m▍\033[0m %s\n' "$*"; }
 
-command -v cargo >/dev/null || { echo "Rust is missing: install it with  omarchy pkg add rust  (or rustup), then re-run." >&2; exit 1; }
+command -v cargo >/dev/null || { echo "Rust is missing: install a Rust toolchain (https://rustup.rs or your distro's rust package), then re-run." >&2; exit 1; }
 for dep in jq ffmpeg; do command -v "$dep" >/dev/null || say "optional: $dep is not installed (jq is needed by the bar widget)"; done
 
 # Installed as an Omarchy plugin (~/.config/omarchy/plugins/…): build outside the plugin folder so
