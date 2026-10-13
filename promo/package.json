@@ -1,0 +1,42 @@
+{
+  "name": "nerv-magi-promo",
+  "version": "1.0.0",
+  "description": "NERV MAGI launch video (Remotion): pnpm i && pnpm run render",
+  "repository": {},
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "@remotion/cli": "4.0.535",
+    "@remotion/fonts": "4.0.535",
+    "@remotion/media": "4.0.535",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.535"
+  },
+  "devDependencies": {
+    "@remotion/eslint-config-flat": "4.0.535",
+    "@types/react": "19.2.7",
+    "@types/web": "0.0.166",
+    "eslint": "9.39.5",
+    "prettier": "3.8.1",
+    "typescript": "5.9.3"
+  },
+  "scripts": {
+    "dev": "remotion studio",
+    "prepare-assets": "bash scripts/sync-assets.sh && bash scripts/check-glyphs.sh && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/make-audio.mjs",
+    "footage": "bash scripts/record-footage.sh",
+    "audio": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/make-audio.mjs && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-sync.mjs",
+    "render": "bash scripts/render.sh",
+    "lint": "eslint src && tsc",
+    "music": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/music/compose.mjs",
+    "mux": "bash scripts/render.sh mux"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
+  "engines": {
+    "node": ">=22.18"
+  }
+}
