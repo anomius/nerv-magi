@@ -169,7 +169,15 @@ fn ellipsize_(canvas: &Cv, paint: &Paint, s: &str, max_w: f32) -> String {
 }
 
 /// A label/value pair: label (Barlow, dim orange) then value (Fira Code), returns the end x.
-pub fn label_value(canvas: &mut Cv, fonts: &Fonts, x: f32, base: f32, label: &str, value: &str, value_color: Color) -> f32 {
+pub fn label_value(
+    canvas: &mut Cv,
+    fonts: &Fonts,
+    x: f32,
+    base: f32,
+    label: &str,
+    value: &str,
+    value_color: Color,
+) -> f32 {
     let lp = text_paint(&fonts.label(), 22.0, alpha(Palette::ORANGE, 0.75)).with_letter_spacing(1.0);
     let vp = text_paint(&fonts.mono(), 26.0, value_color);
     let w = text(canvas, x, base, label, &lp);
@@ -234,7 +242,8 @@ pub fn seg_bar(canvas: &mut Cv, r: Rect, value: f32, segments: usize, on: Color,
     let mut off_path = Path::new();
     for i in 0..n {
         let o = i as f32 * (seg + gap);
-        let cell = if vertical { Rect::new(r.x, r.bottom() - o - seg, r.w, seg) } else { Rect::new(r.x + o, r.y, seg, r.h) };
+        let cell =
+            if vertical { Rect::new(r.x, r.bottom() - o - seg, r.w, seg) } else { Rect::new(r.x + o, r.y, seg, r.h) };
         let p = if i < lit { &mut on_path } else { &mut off_path };
         p.rect(cell.x, cell.y, cell.w, cell.h);
     }
@@ -268,7 +277,10 @@ mod tests {
             let r = (x * x + y * y).sqrt();
             assert!((r - 3.0).abs() < 0.01, "{x} {y}");
         }
-        let dirs: std::collections::BTreeSet<(i32, i32)> = h.iter().map(|(x, y)| (x.signum() as i32 * (x.abs() > 0.01) as i32, y.signum() as i32 * (y.abs() > 0.01) as i32)).collect();
+        let dirs: std::collections::BTreeSet<(i32, i32)> = h
+            .iter()
+            .map(|(x, y)| (x.signum() as i32 * (x.abs() > 0.01) as i32, y.signum() as i32 * (y.abs() > 0.01) as i32))
+            .collect();
         assert_eq!(dirs.len(), 8);
         assert!(halo_offsets(0.0).iter().all(|&(x, y)| x == 0.0 && y == 0.0));
     }

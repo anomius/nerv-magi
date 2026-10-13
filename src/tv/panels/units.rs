@@ -4,10 +4,10 @@ use femtovg::{Align, Paint, Path};
 
 use super::plate::{self, Cuts};
 use super::{status_color, Ctx};
-use crate::tv::usage;
 use crate::state::{fmt_age, fmt_bytes, Agent, AgentStatus};
 use crate::tv::gfx::{self, Palette};
 use crate::tv::layout::Rect;
+use crate::tv::usage;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct RowPlan {
@@ -72,7 +72,11 @@ pub fn draw(ctx: &mut Ctx, r: Rect, band: Rect) {
 
     let inner = Rect::new(r.x + 12.0, r.y, r.w - 24.0, r.h);
     // all fit → sorted order including idle; overflow → non-idle only, then MORE, then STANDBY
-    let rows: Vec<&Agent> = if plan.standby_row || plan.more > 0 { non_idle.iter().take(plan.shown).copied().collect() } else { sorted.clone() };
+    let rows: Vec<&Agent> = if plan.standby_row || plan.more > 0 {
+        non_idle.iter().take(plan.shown).copied().collect()
+    } else {
+        sorted.clone()
+    };
     let n_rows = rows.len() + (plan.more > 0) as usize + plan.standby_row as usize;
     let row_h = row_height(n_rows, r.h - plate::PLATE_TOP - SYNC_H);
     let max_ram = rows.iter().filter_map(|a| a.rss_bytes).max().unwrap_or(0);
@@ -134,7 +138,11 @@ fn summary(ctx: &mut Ctx, r: Rect) {
 
 fn lamp(ctx: &mut Ctx, x: f32, cy: f32, status: AgentStatus) {
     let color = status_color(status);
-    let a = if status == AgentStatus::Blocked { 0.35 + 0.65 * (0.5 + 0.5 * (ctx.t * std::f32::consts::TAU).cos()) } else { 1.0 };
+    let a = if status == AgentStatus::Blocked {
+        0.35 + 0.65 * (0.5 + 0.5 * (ctx.t * std::f32::consts::TAU).cos())
+    } else {
+        1.0
+    };
     let sq = Rect::new(x, cy - 9.0, 18.0, 18.0);
     if status == AgentStatus::Idle {
         gfx::stroke_rect(ctx.canvas, sq, color, 2.5);
@@ -163,7 +171,10 @@ pub fn sync_bar(c: &mut gfx::Cv, r: Rect, ratio: Option<f32>, segments: usize) {
         None => {
             let mut p = Path::new();
             p.rect(r.x, r.y, r.w, r.h);
-            c.stroke_path(&p, &Paint::color(gfx::alpha(Palette::DIM, 0.8)).with_line_width(1.5).with_line_dash(&[6.0, 4.0]));
+            c.stroke_path(
+                &p,
+                &Paint::color(gfx::alpha(Palette::DIM, 0.8)).with_line_width(1.5).with_line_dash(&[6.0, 4.0]),
+            );
         }
     }
 }
@@ -223,7 +234,11 @@ fn row_base(ctx: &mut Ctx, r: Rect, a: &Agent, i: usize, max_ram: u64) {
     let type_label = ctx.state.type_label(a).replace(" · ", " ");
     let c = &mut *ctx.canvas;
 
-    let name_p = gfx::text_paint(&fonts.display(), 28.0, if a.status == AgentStatus::Idle { gfx::alpha(Palette::WHITE, 0.6) } else { Palette::WHITE });
+    let name_p = gfx::text_paint(
+        &fonts.display(),
+        28.0,
+        if a.status == AgentStatus::Idle { gfx::alpha(Palette::WHITE, 0.6) } else { Palette::WHITE },
+    );
     let name = gfx::ellipsize(c, &name_p, &a.display_name().to_uppercase(), NAME_W);
     gfx::text(c, r.x + NAME_X, l1, &name, &name_p);
 
@@ -291,7 +306,10 @@ fn row_base(ctx: &mut Ctx, r: Rect, a: &Agent, i: usize, max_ram: u64) {
         let d_p = gfx::text_paint(&fonts.mono(), 22.0, gfx::alpha(Palette::CYAN, 0.45));
         let since = super::header::local_time(a.since);
         let session = meta.and_then(|m| m.session_id.clone()).unwrap_or_else(|| "--".into());
-        let mut line = format!("PANE {} · TAB {} · SESSION {} · SINCE {:02}:{:02}:{:02}", a.pane_id, a.tab_label, session, since.4, since.5, since.6);
+        let mut line = format!(
+            "PANE {} · TAB {} · SESSION {} · SINCE {:02}:{:02}:{:02}",
+            a.pane_id, a.tab_label, session, since.4, since.5, since.6
+        );
         if let Some(u) = &usage {
             if let Some(m) = &u.mode {
                 line.push_str(&format!(" · MODE {}", m.to_uppercase()));
@@ -305,7 +323,14 @@ fn row_base(ctx: &mut Ctx, r: Rect, a: &Agent, i: usize, max_ram: u64) {
         gfx::text(c, r.x + NAME_X, l3, &fit, &d_p);
         if let (Some(b), true) = (a.rss_bytes, max_ram > 0) {
             let bar = Rect::new(r.x + RAIL_X, l3 - 14.0, r.w - RAIL_X - 6.0, 12.0);
-            gfx::seg_bar(c, bar, b as f32 / max_ram as f32, 12, gfx::alpha(Palette::WHITE, 0.55), gfx::alpha(Palette::DIM, 0.3));
+            gfx::seg_bar(
+                c,
+                bar,
+                b as f32 / max_ram as f32,
+                12,
+                gfx::alpha(Palette::WHITE, 0.55),
+                gfx::alpha(Palette::DIM, 0.3),
+            );
         }
     }
     gfx::line(c, r.x + NAME_X, r.bottom(), r.right(), r.bottom(), gfx::alpha(Palette::ORANGE, 0.12), 1.0);
@@ -367,7 +392,11 @@ fn sync_trace(ctx: &mut Ctx, r: Rect) {
             Some(v) => {
                 let x = g.x + g.w * i as f32 / (n - 1) as f32;
                 let y = g.bottom() - g.h * (v / top).clamp(0.0, 1.0);
-                if pen { p.line_to(x, y) } else { p.move_to(x, y) }
+                if pen {
+                    p.line_to(x, y)
+                } else {
+                    p.move_to(x, y)
+                }
                 pen = true;
                 last = Some((x, y));
             }

@@ -48,7 +48,12 @@ pub fn draw(ctx: &mut Ctx, r: Rect) {
     let th = &ctx.config.thresholds;
     let votes = ctx.state.magi(th);
     let level = ctx.state.alert_level(th);
-    deliberation(ctx, Rect::new(r.x + 30.0, r.y + plate::PLATE_TOP + 4.0, 320.0, r.h - plate::PLATE_TOP - 30.0), &votes, level);
+    deliberation(
+        ctx,
+        Rect::new(r.x + 30.0, r.y + plate::PLATE_TOP + 4.0, 320.0, r.h - plate::PLATE_TOP - 30.0),
+        &votes,
+        level,
+    );
 
     let [mel, bal, cas] = plates(r);
     let hub = (bal.x + bal.w / 2.0, (bal.bottom() + cas.y) / 2.0);
@@ -78,9 +83,13 @@ fn unit(ctx: &mut Ctx, r: Rect, v: &MagiVote, i: usize, cuts: [f32; 4]) {
     ctx.canvas.stroke_path(&path, &Paint::color(Palette::CYAN).with_line_width(3.0));
     let c = &mut *ctx.canvas;
     let mid = r.x + r.w / 2.0;
-    let np = gfx::text_paint(&ctx.fonts.display(), 28.0, Palette::CYAN).with_letter_spacing(2.0).with_text_align(Align::Center);
+    let np = gfx::text_paint(&ctx.fonts.display(), 28.0, Palette::CYAN)
+        .with_letter_spacing(2.0)
+        .with_text_align(Align::Center);
     gfx::text(c, mid, r.y + 38.0, v.unit, &np);
-    let subj = gfx::text_paint(&ctx.fonts.label(), 22.0, gfx::alpha(Palette::CYAN, 0.6)).with_text_align(Align::Center).with_letter_spacing(3.0);
+    let subj = gfx::text_paint(&ctx.fonts.label(), 22.0, gfx::alpha(Palette::CYAN, 0.6))
+        .with_text_align(Align::Center)
+        .with_letter_spacing(3.0);
     gfx::text(c, mid, r.y + 60.0, v.subject, &subj);
     if visible {
         let vp = gfx::text_paint(&ctx.fonts.mincho(), 72.0, color).with_text_align(Align::Center);
@@ -147,11 +156,35 @@ pub fn traces(ctx: &mut Ctx, l: &Layout) {
     let gx = l.magi.right() + (l.telemetry.x - l.magi.right()) / 2.0;
     let routes = [
         // MELCHIOR·1 → telemetry
-        (0, vec![(mel.right(), mel.y + mel.h * 0.6), (gx - 6.0, mel.y + mel.h * 0.6), (gx - 6.0, l.telemetry.y + 60.0), (l.telemetry.x, l.telemetry.y + 60.0)]),
+        (
+            0,
+            vec![
+                (mel.right(), mel.y + mel.h * 0.6),
+                (gx - 6.0, mel.y + mel.h * 0.6),
+                (gx - 6.0, l.telemetry.y + 60.0),
+                (l.telemetry.x, l.telemetry.y + 60.0),
+            ],
+        ),
         // BALTHASAR·2 → processes
-        (1, vec![(bal.right(), bal.y + 40.0), (gx + 8.0, bal.y + 40.0), (gx + 8.0, l.procs.y + 60.0), (l.procs.x, l.procs.y + 60.0)]),
+        (
+            1,
+            vec![
+                (bal.right(), bal.y + 40.0),
+                (gx + 8.0, bal.y + 40.0),
+                (gx + 8.0, l.procs.y + 60.0),
+                (l.procs.x, l.procs.y + 60.0),
+            ],
+        ),
         // CASPER·3 → roster (via the gutter under MAGI)
-        (2, vec![(cas.x + 60.0, cas.bottom()), (cas.x + 60.0, gap_y), (l.band.right() + 12.0, gap_y), (l.band.right(), gap_y)]),
+        (
+            2,
+            vec![
+                (cas.x + 60.0, cas.bottom()),
+                (cas.x + 60.0, gap_y),
+                (l.band.right() + 12.0, gap_y),
+                (l.band.right(), gap_y),
+            ],
+        ),
     ];
     for (i, pts) in routes {
         let pulse = ctx.anim.trace_pulse(i, ctx.t);
@@ -177,7 +210,15 @@ pub fn extra_routes(l: &Layout) -> Vec<(Option<usize>, Vec<(f32, f32)>)> {
     let tap = l.sdat.y + 70.0;
     let jx = l.jobs.right() - 160.0;
     vec![
-        (Some(2), vec![(sx, l.magi.y), (sx, over_plates), (l.sectors.x + 140.0, over_plates), (l.sectors.x + 140.0, l.sectors.y)]),
+        (
+            Some(2),
+            vec![
+                (sx, l.magi.y),
+                (sx, over_plates),
+                (l.sectors.x + 140.0, over_plates),
+                (l.sectors.x + 140.0, l.sectors.y),
+            ],
+        ),
         (Some(0), vec![(tx, l.magi.bottom()), (tx, under_magi), (tx + 60.0, under_magi), (tx + 60.0, l.timer.y)]),
         (None, vec![(gutter, under_magi), (gutter, tap), (l.sdat.x, tap)]),
         (Some(2), vec![(gutter, tap), (gutter, under_roster), (jx, under_roster), (jx, l.jobs.y)]),
@@ -194,10 +235,15 @@ mod tests {
         let boxes = l.content_boxes();
         let on_edge = |b: Rect, (x, y): (f32, f32)| {
             let within = x >= b.x - 0.5 && x <= b.right() + 0.5 && y >= b.y - 0.5 && y <= b.bottom() + 0.5;
-            let edge = (x - b.x).abs() < 0.5 || (x - b.right()).abs() < 0.5 || (y - b.y).abs() < 0.5 || (y - b.bottom()).abs() < 0.5;
+            let edge = (x - b.x).abs() < 0.5
+                || (x - b.right()).abs() < 0.5
+                || (y - b.y).abs() < 0.5
+                || (y - b.bottom()).abs() < 0.5;
             within && edge
         };
-        let strictly_inside = |(x, y): (f32, f32)| boxes.iter().any(|b| x > b.x + 1.0 && x < b.right() - 1.0 && y > b.y + 1.0 && y < b.bottom() - 1.0);
+        let strictly_inside = |(x, y): (f32, f32)| {
+            boxes.iter().any(|b| x > b.x + 1.0 && x < b.right() - 1.0 && y > b.y + 1.0 && y < b.bottom() - 1.0)
+        };
         let routes = extra_routes(&l);
         let targets = [l.sectors, l.timer, l.sdat, l.jobs];
         assert_eq!(routes.len(), targets.len());

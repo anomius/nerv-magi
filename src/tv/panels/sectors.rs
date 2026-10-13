@@ -50,10 +50,13 @@ pub fn draw(ctx: &mut Ctx, r: Rect) {
         let inner_w = rad * 1.45;
         let fg = if n.blocked > 0 || n.working > 0 { Palette::WHITE } else { gfx::alpha(Palette::WHITE, 0.75) };
         if n.blocked > 0 {
-            let ep = gfx::text_paint(&fonts.bold(), (rad * 0.24).clamp(22.0, 28.0), Palette::WHITE).with_text_align(Align::Center).with_letter_spacing(2.0);
+            let ep = gfx::text_paint(&fonts.bold(), (rad * 0.24).clamp(22.0, 28.0), Palette::WHITE)
+                .with_text_align(Align::Center)
+                .with_letter_spacing(2.0);
             gfx::text(c, x, y - rad * 0.42, "EMERGENCY", &ep);
         } else {
-            let ip = gfx::text_paint(&fonts.mono(), 22.0, gfx::alpha(Palette::ORANGE, 0.8)).with_text_align(Align::Center);
+            let ip =
+                gfx::text_paint(&fonts.mono(), 22.0, gfx::alpha(Palette::ORANGE, 0.8)).with_text_align(Align::Center);
             gfx::text(c, x, y - rad * 0.42, &w.id, &ip);
         }
         let np = gfx::text_paint(&fonts.bold(), (rad * 0.42).clamp(26.0, 46.0), fg).with_text_align(Align::Center);
@@ -62,11 +65,16 @@ pub fn draw(ctx: &mut Ctx, r: Rect) {
         let label = gfx::ellipsize(c, &lp, &w.label, inner_w);
         gfx::text(c, x, y + rad * 0.42, &label, &lp);
         // one pip per agent, colored by status
-        let pips: Vec<AgentStatus> = [(n.blocked, AgentStatus::Blocked), (n.working, AgentStatus::Working), (n.done, AgentStatus::Done), (n.idle, AgentStatus::Idle)]
-            .iter()
-            .flat_map(|&(k, s)| std::iter::repeat(s).take(k))
-            .take(8)
-            .collect();
+        let pips: Vec<AgentStatus> = [
+            (n.blocked, AgentStatus::Blocked),
+            (n.working, AgentStatus::Working),
+            (n.done, AgentStatus::Done),
+            (n.idle, AgentStatus::Idle),
+        ]
+        .iter()
+        .flat_map(|&(k, s)| std::iter::repeat(s).take(k))
+        .take(8)
+        .collect();
         let pw = 12.0;
         let mut px = x - (pips.len() as f32 * (pw + 4.0) - 4.0) / 2.0;
         for s in pips {
@@ -147,7 +155,8 @@ pub fn clear_of_hexes(b: Rect, pts: &[(f32, f32)], rad: f32) -> bool {
 /// The sector count as a big 7-segment numeral over the plate's bottom-right edge, with its
 /// ghost; skipped when the honeycomb reaches that corner.
 fn big_count(c: &mut gfx::Cv, fonts: &crate::tv::fonts::Fonts, r: Rect, n: usize, pts: &[(f32, f32)], rad: f32) {
-    let seg = gfx::text_paint(&fonts.segment(), COUNT_SIZE, gfx::alpha(Palette::ORANGE, 0.85)).with_text_align(Align::Right);
+    let seg =
+        gfx::text_paint(&fonts.segment(), COUNT_SIZE, gfx::alpha(Palette::ORANGE, 0.85)).with_text_align(Align::Right);
     let ghost = "88";
     let b = count_box(r, gfx::text_width(c, ghost, &seg), COUNT_SIZE);
     if !clear_of_hexes(b, pts, rad) {
@@ -177,7 +186,9 @@ mod tests {
         let r = crate::tv::layout::Rect { x: 24.0, y: 1572.0, w: 1700.0, h: 430.0 };
         let pts = hex_positions(r, 14, 70.0);
         assert_eq!(pts.len(), 14);
-        for (x, y) in pts { assert!(x - 70.0 >= r.x && x + 70.0 <= r.x + r.w && y - 70.0 >= r.y && y + 70.0 <= r.y + r.h); }
+        for (x, y) in pts {
+            assert!(x - 70.0 >= r.x && x + 70.0 <= r.x + r.w && y - 70.0 >= r.y && y + 70.0 <= r.y + r.h);
+        }
     }
 
     #[test]
@@ -187,7 +198,15 @@ mod tests {
             let (rad, pts) = hex_layout(r, n, 110.0);
             assert_eq!(pts.len(), n);
             assert!(rad <= 110.0 && rad > 10.0, "{n}: {rad}");
-            for &(x, y) in &pts { assert!(x - rad >= r.x - 0.01 && x + rad <= r.right() + 0.01 && y - rad >= r.y - 0.01 && y + rad <= r.bottom() + 0.01, "{n}"); }
+            for &(x, y) in &pts {
+                assert!(
+                    x - rad >= r.x - 0.01
+                        && x + rad <= r.right() + 0.01
+                        && y - rad >= r.y - 0.01
+                        && y + rad <= r.bottom() + 0.01,
+                    "{n}"
+                );
+            }
             for (i, a) in pts.iter().enumerate() {
                 for b in &pts[i + 1..] {
                     let d = ((a.0 - b.0).powi(2) + (a.1 - b.1).powi(2)).sqrt();

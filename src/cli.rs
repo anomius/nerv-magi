@@ -103,7 +103,18 @@ mod tests {
 
     #[test]
     fn record_takes_path_fps_and_seconds() {
-        let cli = Cli::try_parse_from(["nerv", "tv", "--demo", "--record", "clip.mp4", "--seconds", "7.5", "--size", "1920x1080"]).unwrap();
+        let cli = Cli::try_parse_from([
+            "nerv",
+            "tv",
+            "--demo",
+            "--record",
+            "clip.mp4",
+            "--seconds",
+            "7.5",
+            "--size",
+            "1920x1080",
+        ])
+        .unwrap();
         let Command::Tv(a) = cli.command else { panic!("not tv") };
         assert_eq!(a.record.as_deref(), Some(std::path::Path::new("clip.mp4")));
         assert_eq!(a.fps, 60);

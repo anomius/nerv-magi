@@ -21,7 +21,12 @@ pub struct Thresholds {
 
 impl Default for Thresholds {
     fn default() -> Self {
-        Self { cpu_max: 0.85, cpu_temp_max_c: 90.0, mem_min_available_bytes: 1_500_000_000, mem_critical_bytes: 800_000_000 }
+        Self {
+            cpu_max: 0.85,
+            cpu_temp_max_c: 90.0,
+            mem_min_available_bytes: 1_500_000_000,
+            mem_critical_bytes: 800_000_000,
+        }
     }
 }
 
@@ -140,7 +145,11 @@ pub struct TvConfig {
 impl TvConfig {
     /// Effective scanline mode: `Off` when the master switch is off, else the style.
     pub fn scanline_mode(&self) -> ScanlineMode {
-        if self.scanlines { self.scanline_style } else { ScanlineMode::Off }
+        if self.scanlines {
+            self.scanline_style
+        } else {
+            ScanlineMode::Off
+        }
     }
 }
 
@@ -206,8 +215,9 @@ impl Config {
     /// Missing file → defaults. A malformed file is an error (better than silently ignoring it).
     pub fn load() -> anyhow::Result<Self> {
         match Self::path() {
-            Some(p) if p.exists() => Self::parse(&std::fs::read_to_string(&p)?)
-                .map_err(|e| anyhow::anyhow!("{}: {e}", p.display())),
+            Some(p) if p.exists() => {
+                Self::parse(&std::fs::read_to_string(&p)?).map_err(|e| anyhow::anyhow!("{}: {e}", p.display()))
+            }
             _ => Ok(Self::default()),
         }
     }
@@ -250,7 +260,10 @@ mod tests {
         assert_eq!(c.spectrum.bars, 48);
         assert!(c.tv.workspace.is_none());
         assert!(c.tv.rotate);
-        assert_eq!((c.tv.main_secs, c.tv.load_secs, c.tv.sync_secs, c.tv.boot_secs, c.tv.emergency_hold_secs), (45, 15, 15, 4, 5));
+        assert_eq!(
+            (c.tv.main_secs, c.tv.load_secs, c.tv.sync_secs, c.tv.boot_secs, c.tv.emergency_hold_secs),
+            (45, 15, 15, 4, 5)
+        );
         assert_eq!(c.thresholds.mem_critical_bytes, 800_000_000);
     }
 
@@ -259,7 +272,10 @@ mod tests {
         let c = Config::parse("[tv]\nworkspace = \"name:TV\"\n[thresholds]\ncpu_max = 0.5\n").unwrap();
         assert_eq!(c.tv.workspace.as_deref(), Some("name:TV"));
         assert!(c.tv.cast_receiver.is_none() && !c.tv.cast_audio);
-        assert_eq!(Config::parse("[tv]\ncast_receiver = \"192.0.2.7\"\n").unwrap().tv.cast_receiver.as_deref(), Some("192.0.2.7"));
+        assert_eq!(
+            Config::parse("[tv]\ncast_receiver = \"192.0.2.7\"\n").unwrap().tv.cast_receiver.as_deref(),
+            Some("192.0.2.7")
+        );
         assert_eq!(c.tv.fps_active, 60);
         assert_eq!(c.thresholds.cpu_max, 0.5);
         assert_eq!(c.thresholds.mem_min_available_bytes, 1_500_000_000);
@@ -272,8 +288,16 @@ mod tests {
         assert_eq!(Config::parse("[tv]\nscanline_style = \"crt\"\n").unwrap().tv.scanline_mode(), ScanlineMode::Crt);
         assert!(Config::parse("[tv]\nscanline_style = \"neon\"\n").is_err());
         let mut m = ScanlineMode::Off;
-        let seen: Vec<_> = (0..5).map(|_| { m = m.next(); m }).collect();
-        assert_eq!(seen, [ScanlineMode::Subtle, ScanlineMode::Heavy, ScanlineMode::Crt, ScanlineMode::Off, ScanlineMode::Subtle]);
+        let seen: Vec<_> = (0..5)
+            .map(|_| {
+                m = m.next();
+                m
+            })
+            .collect();
+        assert_eq!(
+            seen,
+            [ScanlineMode::Subtle, ScanlineMode::Heavy, ScanlineMode::Crt, ScanlineMode::Off, ScanlineMode::Subtle]
+        );
     }
 
     #[test]

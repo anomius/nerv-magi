@@ -59,7 +59,17 @@ pub fn draw(ctx: &mut Ctx, reconnecting: bool) {
             _ => String::new(),
         };
         let dp = gfx::text_paint(&fonts.mono(), 32.0, gfx::alpha(Palette::WHITE, 0.75));
-        gfx::text(c, x, 900.0, &format!("LAST KNOWN PILOTS {} · SECTORS {}", ctx.state.herdr.agents.len(), ctx.state.herdr.workspaces.len()), &dp);
+        gfx::text(
+            c,
+            x,
+            900.0,
+            &format!(
+                "LAST KNOWN PILOTS {} · SECTORS {}",
+                ctx.state.herdr.agents.len(),
+                ctx.state.herdr.workspaces.len()
+            ),
+            &dp,
+        );
         let rp = gfx::text_paint(&fonts.mono(), 28.0, gfx::alpha(Palette::AMBER, 0.8));
         gfx::text(c, x, 950.0, &gfx::ellipsize(c, &rp, &format!("REASON {}", reason.to_uppercase()), 1580.0), &rp);
         gfx::text(c, x, 1000.0, "RETRY 1 s → 2 s → 5 s · FULL RE-SNAPSHOT ON RELINK", &rp);
@@ -72,14 +82,24 @@ pub fn draw(ctx: &mut Ctx, reconnecting: bool) {
     let head = gfx::text_paint(&fonts.mono(), 44.0, Palette::RED).with_letter_spacing(2.0);
     if shown >= 1 {
         gfx::text(c, x, 520.0, "MAGI SYSTEM BOOT", &head);
-        gfx::text(c, x + 1100.0, 520.0, "MELCHIOR·1 BALTHASAR·2 CASPER·3", &gfx::text_paint(&fonts.mono(), 26.0, gfx::alpha(Palette::RED, 0.7)));
+        gfx::text(
+            c,
+            x + 1100.0,
+            520.0,
+            "MELCHIOR·1 BALTHASAR·2 CASPER·3",
+            &gfx::text_paint(&fonts.mono(), 26.0, gfx::alpha(Palette::RED, 0.7)),
+        );
     }
     let lp = gfx::text_paint(&fonts.mono(), 40.0, Palette::RED);
     let dots = gfx::text_paint(&fonts.mono(), 40.0, gfx::alpha(Palette::RED, 0.45));
     for (i, (label, ok)) in checks.iter().enumerate().take(shown.saturating_sub(1)) {
         let y = 620.0 + i as f32 * 86.0;
         let lamp = Rect::new(x, y - 30.0, 30.0, 30.0);
-        gfx::fill_rect(c, lamp, if *ok { Palette::GREEN } else { gfx::alpha(Palette::AMBER, 0.35 + 0.35 * (ctx.t * 4.0).sin().abs()) });
+        gfx::fill_rect(
+            c,
+            lamp,
+            if *ok { Palette::GREEN } else { gfx::alpha(Palette::AMBER, 0.35 + 0.35 * (ctx.t * 4.0).sin().abs()) },
+        );
         let w = gfx::text(c, x + 56.0, y, label, &lp);
         let n = ((980.0 - w) / 24.0).max(3.0) as usize;
         gfx::text(c, x + 76.0 + w, y, &"·".repeat(n), &dots);

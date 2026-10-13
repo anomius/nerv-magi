@@ -36,7 +36,11 @@ const TOPOLOGY_EVENTS: [&str; 7] = [
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Event {
-    Status { pane_id: String, status: AgentStatus, title: Option<String> },
+    Status {
+        pane_id: String,
+        status: AgentStatus,
+        title: Option<String>,
+    },
     /// Something in the layout changed: re-snapshot.
     Topology,
 }
@@ -72,14 +76,17 @@ pub fn agents_from(snapshot: &Value, agent_list: &Value, now: SystemTime) -> (Ve
             number: w.get("number").and_then(Value::as_u64).unwrap_or(0) as u32,
         })
         .collect();
-    let tabs: HashMap<String, String> = items(&snap["tabs"]).iter().map(|t| (text(t, "tab_id"), text(t, "label"))).collect();
+    let tabs: HashMap<String, String> =
+        items(&snap["tabs"]).iter().map(|t| (text(t, "tab_id"), text(t, "label"))).collect();
     let agents = items(&agent_list["agents"])
         .iter()
         .filter_map(|a| {
             let pane_id = a.get("pane_id")?.as_str()?.to_string();
             let workspace_id = text(a, "workspace_id");
-            let workspace_label =
-                workspaces.iter().find(|w| w.id == workspace_id).map_or_else(|| workspace_id.clone(), |w| w.label.clone());
+            let workspace_label = workspaces
+                .iter()
+                .find(|w| w.id == workspace_id)
+                .map_or_else(|| workspace_id.clone(), |w| w.label.clone());
             Some(Agent {
                 pane_id,
                 name: a.get("name").and_then(Value::as_str).map(str::to_string),
@@ -163,7 +170,8 @@ pub fn job_panes(snapshot: &Value, agent_panes: &BTreeSet<String>) -> Vec<PaneJo
             if agent_panes.contains(pane_id) {
                 return None;
             }
-            let cwd = [text(p, "foreground_cwd"), text(p, "cwd")].into_iter().find(|c| !c.is_empty()).unwrap_or_default();
+            let cwd =
+                [text(p, "foreground_cwd"), text(p, "cwd")].into_iter().find(|c| !c.is_empty()).unwrap_or_default();
             Some(PaneJob {
                 pane_id: pane_id.to_string(),
                 workspace_label: label_of("workspaces", "workspace_id", &text(p, "workspace_id")),
@@ -267,7 +275,8 @@ fn response(line: &str) -> Result<Value, String> {
 fn connect(path: &Path, method: &str, params: Value) -> Result<UnixStream, String> {
     let mut s = UnixStream::connect(path).map_err(|e| format!("{}: {e}", path.display()))?;
     s.set_write_timeout(Some(CALL_TIMEOUT)).ok();
-    writeln!(s, "{}", json!({"id": "nerv", "method": method, "params": params})).map_err(|e| format!("{method}: {e}"))?;
+    writeln!(s, "{}", json!({"id": "nerv", "method": method, "params": params}))
+        .map_err(|e| format!("{method}: {e}"))?;
     Ok(s)
 }
 
@@ -347,7 +356,13 @@ fn jobs(path: &Path, panes: &[PaneJob], home: &str) -> Vec<PaneJob> {
 }
 
 /// The pass run right after connecting and then every `PERIOD`.
-fn pass(path: &Path, panes: &BTreeSet<String>, meta: &[(String, AgentMeta)], job_panes: &[PaneJob], home: &str) -> Vec<Update> {
+fn pass(
+    path: &Path,
+    panes: &BTreeSet<String>,
+    meta: &[(String, AgentMeta)],
+    job_panes: &[PaneJob],
+    home: &str,
+) -> Vec<Update> {
     let mut out = Vec::new();
     let rows = rss_rows(path, panes);
     if !rows.is_empty() {
@@ -415,7 +430,9 @@ fn session(path: &Path, tx: &Sender<Update>, reported: &mut Reported, attempt: &
             Ok(0) => return End::Lost("herdr event stream closed".into()),
             Ok(_) if line.ends_with('\n') => {
                 match parse_event(&line) {
-                    Some(Event::Status { pane_id, status, title }) => send!(Update::AgentStatus { pane_id, status, title }),
+                    Some(Event::Status { pane_id, status, title }) => {
+                        send!(Update::AgentStatus { pane_id, status, title })
+                    }
                     Some(Event::Topology) => {
                         topology_at.get_or_insert_with(Instant::now);
                     }
@@ -508,7 +525,8 @@ mod tests {
 
     #[test]
     fn agents_merge_names_and_labels() {
-        let (agents, workspaces) = agents_from(&load("herdr_snapshot.json"), &load("herdr_agent_list.json"), SystemTime::UNIX_EPOCH);
+        let (agents, workspaces) =
+            agents_from(&load("herdr_snapshot.json"), &load("herdr_agent_list.json"), SystemTime::UNIX_EPOCH);
         assert_eq!(agents.len(), 3);
         assert_eq!(workspaces.len(), 2);
         let alpha = agents.iter().find(|a| a.name.as_deref() == Some("alpha")).unwrap();
@@ -519,8 +537,17 @@ mod tests {
 
     #[test]
     fn parses_status_event_and_ignores_ack() {
-        let e = parse_event(r#"{"event":"pane.agent_status_changed","data":{"pane_id":"w1:p2","workspace_id":"w1","agent_status":"blocked","title":"Needs approval"}}"#);
-        assert_eq!(e, Some(Event::Status { pane_id: "w1:p2".into(), status: AgentStatus::Blocked, title: Some("Needs approval".into()) }));
+        let e = parse_event(
+            r#"{"event":"pane.agent_status_changed","data":{"pane_id":"w1:p2","workspace_id":"w1","agent_status":"blocked","title":"Needs approval"}}"#,
+        );
+        assert_eq!(
+            e,
+            Some(Event::Status {
+                pane_id: "w1:p2".into(),
+                status: AgentStatus::Blocked,
+                title: Some("Needs approval".into())
+            })
+        );
         assert_eq!(parse_event(r#"{"id":"sub","result":{"type":"subscription_started"}}"#), None);
         assert_eq!(parse_event(r#"{"event":"pane.closed","data":{"pane_id":"w1:p2"}}"#), Some(Event::Topology));
         assert_eq!(parse_event("not json"), None);
@@ -533,7 +560,10 @@ mod tests {
         assert_eq!(parse_event(closed), Some(Event::Topology));
         assert_eq!(parse_event(r#"{"event":"pane_focused","data":{"pane_id":"w1:p1"}}"#), None);
         let no_title = r#"{"event":"pane.agent_status_changed","data":{"pane_id":"w1:p1","workspace_id":"w1","agent_status":"done","title":null}}"#;
-        assert_eq!(parse_event(no_title), Some(Event::Status { pane_id: "w1:p1".into(), status: AgentStatus::Done, title: None }));
+        assert_eq!(
+            parse_event(no_title),
+            Some(Event::Status { pane_id: "w1:p1".into(), status: AgentStatus::Done, title: None })
+        );
     }
 
     #[test]
@@ -651,7 +681,9 @@ mod tests {
     }
 
     /// Serves one request per connection with `handler(method)`; every request is logged.
-    fn fake_herdr(mut handler: impl FnMut(&str, &Value) -> Reply + Send + 'static) -> (tempfile::TempDir, std::path::PathBuf, Receiver<Value>) {
+    fn fake_herdr(
+        mut handler: impl FnMut(&str, &Value) -> Reply + Send + 'static,
+    ) -> (tempfile::TempDir, std::path::PathBuf, Receiver<Value>) {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("herdr.sock");
         let listener = UnixListener::bind(&path).unwrap();
@@ -718,7 +750,8 @@ mod tests {
 
     #[test]
     fn connect_pass_sends_agent_meta_and_pane_jobs() {
-        let (_dir, path, _log) = fake_herdr(|method, req| match method {
+        let (_dir, path, _log) = fake_herdr(|method, req| {
+            match method {
             "session.snapshot" => Reply::Line(fixture_line("herdr_snapshot.json")),
             "agent.list" => Reply::Line(fixture_line("herdr_agent_list.json")),
             "events.subscribe" => Reply::Hold(vec![ACK.to_string()]),
@@ -729,6 +762,7 @@ mod tests {
                 .to_string(),
             ),
             _ => Reply::Line(API_ERR.into()),
+        }
         });
         let (tx, rx) = mpsc::channel();
         thread::spawn(move || run_loop(&path, tx, &[Duration::from_millis(50)]));
@@ -783,7 +817,9 @@ mod tests {
                 let mut lines = vec![ACK.to_string()];
                 if subs == 1 {
                     lines.push(r#"{"event":"pane.agent_status_changed","data":{"pane_id":"w1:p2","workspace_id":"w1","agent_status":"working"}}"#.into());
-                    lines.push(r#"{"data":{"pane":{"pane_id":"w2:p2"},"type":"pane_created"},"event":"pane_created"}"#.into());
+                    lines.push(
+                        r#"{"data":{"pane":{"pane_id":"w2:p2"},"type":"pane_created"},"event":"pane_created"}"#.into(),
+                    );
                 }
                 Reply::Hold(lines)
             }

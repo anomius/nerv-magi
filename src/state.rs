@@ -448,7 +448,11 @@ pub fn model_short(model: &str) -> String {
         if part.len() >= 8 && part.chars().all(|c| c.is_ascii_digit()) {
             continue; // date stamp
         }
-        if !part.is_empty() && part.chars().all(|c| c.is_ascii_digit()) && !words.is_empty() && !words.last().unwrap().ends_with(char::is_numeric) {
+        if !part.is_empty()
+            && part.chars().all(|c| c.is_ascii_digit())
+            && !words.is_empty()
+            && !words.last().unwrap().ends_with(char::is_numeric)
+        {
             nums.push(part);
             continue;
         }
@@ -513,9 +517,16 @@ pub enum Source {
 pub enum Update {
     HerdrLink(HerdrLink),
     /// Full replacement of agents + workspaces (on connect and every periodic re-snapshot).
-    HerdrSnapshot { agents: Vec<Agent>, workspaces: Vec<Workspace> },
+    HerdrSnapshot {
+        agents: Vec<Agent>,
+        workspaces: Vec<Workspace>,
+    },
     /// A pushed `pane.agent_status_changed` event.
-    AgentStatus { pane_id: String, status: AgentStatus, title: Option<String> },
+    AgentStatus {
+        pane_id: String,
+        status: AgentStatus,
+        title: Option<String>,
+    },
     /// (pane_id, resident bytes of the pane's process tree)
     AgentRss(Vec<(String, u64)>),
     Sys(SysState),
@@ -996,7 +1007,11 @@ pub mod tests {
     fn same_status_event_is_not_a_transition() {
         let mut s = linked_state(vec![agent("w1:p1", "a", AgentStatus::Working, "w1")]);
         s.apply(
-            Update::AgentStatus { pane_id: "w1:p1".into(), status: AgentStatus::Working, title: Some("new title".into()) },
+            Update::AgentStatus {
+                pane_id: "w1:p1".into(),
+                status: AgentStatus::Working,
+                title: Some("new title".into()),
+            },
             t0() + Duration::from_secs(5),
         );
         assert!(s.ticker.is_empty());
@@ -1174,7 +1189,14 @@ pub mod tests {
         assert!(!s.usage.contains_key("w9:p9"));
         assert_eq!(s.type_label(a), "CLAUDE · OPUS 5.5 · XHIGH");
         assert_eq!(AgentUsage::default().context_pct(), None);
-        s.apply(Update::PlanLimits(vec![PlanLimits { provider: "codex".into(), plan: Some("pro".into()), ..Default::default() }]), t0());
+        s.apply(
+            Update::PlanLimits(vec![PlanLimits {
+                provider: "codex".into(),
+                plan: Some("pro".into()),
+                ..Default::default()
+            }]),
+            t0(),
+        );
         assert_eq!(s.limits_for("codex").unwrap().plan.as_deref(), Some("pro"));
         assert!(s.limits_for("claude").is_none());
     }
@@ -1191,7 +1213,17 @@ pub mod tests {
         );
         assert_eq!(s.meta(&s.herdr.agents[0]).unwrap().branch.as_deref(), Some("main"));
         assert!(!s.agent_meta.contains_key("w9:p9"));
-        s.apply(Update::Procs(vec![ProcRow { pid: 1, name: "claude".into(), cpu: 12.5, rss_bytes: 1, threads: 9, state: 'S' }]), t0());
+        s.apply(
+            Update::Procs(vec![ProcRow {
+                pid: 1,
+                name: "claude".into(),
+                cpu: 12.5,
+                rss_bytes: 1,
+                threads: 9,
+                state: 'S',
+            }]),
+            t0(),
+        );
         s.apply(Update::Jobs(vec![]), t0());
         s.apply(Update::SysExtra(SysExtra { hostname: "nerv-hq".into(), ..Default::default() }), t0());
         s.apply(Update::PowerExtra(PowerExtra { cycles: Some(42), ..Default::default() }), t0());

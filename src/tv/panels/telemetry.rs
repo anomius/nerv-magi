@@ -132,7 +132,8 @@ fn cores(ctx: &mut Ctx, r: Rect, sys: &SysState) {
     // CAUTION / DANGER tags
     let mut tx = r.right();
     for (count, word, color) in [(hot, "DANGER", Palette::RED), (warm, "CAUTION", Palette::AMBER)] {
-        let tp = gfx::text_paint(&fonts.bold(), 22.0, if count > 0 { Palette::BLACK } else { gfx::alpha(color, 0.5) }).with_letter_spacing(1.5);
+        let tp = gfx::text_paint(&fonts.bold(), 22.0, if count > 0 { Palette::BLACK } else { gfx::alpha(color, 0.5) })
+            .with_letter_spacing(1.5);
         let s = format!("{word} {count}");
         let w = gfx::text_width(c, &s, &tp) + 16.0;
         tx -= w;
@@ -166,8 +167,24 @@ fn cores(ctx: &mut Ctx, r: Rect, sys: &SysState) {
     let cpu = ctx.anim.roll("cpu_total", sys.cpu_total * 100.0, ctx.t);
     let c = &mut *ctx.canvas;
     let x = gfx::label_value(c, fonts, r.x, y, "CPU", &format!("{cpu:.0}%"), load_color(sys.cpu_total));
-    let x = gfx::label_value(c, fonts, x + 24.0, y, "PKG", &sys.temp_cpu_c.map_or("--".into(), |t| format!("{t:.0}°C")), Palette::WHITE);
-    gfx::label_value(c, fonts, x + 24.0, y, "FAN", &sys.fan_rpm.map_or("--".into(), |f| format!("{f} RPM")), Palette::WHITE);
+    let x = gfx::label_value(
+        c,
+        fonts,
+        x + 24.0,
+        y,
+        "PKG",
+        &sys.temp_cpu_c.map_or("--".into(), |t| format!("{t:.0}°C")),
+        Palette::WHITE,
+    );
+    gfx::label_value(
+        c,
+        fonts,
+        x + 24.0,
+        y,
+        "FAN",
+        &sys.fan_rpm.map_or("--".into(), |f| format!("{f} RPM")),
+        Palette::WHITE,
+    );
     let spark = Rect::new(r.x, y + 16.0, r.w, r.bottom() - y - 40.0);
     gfx::stroke_rect(c, spark, gfx::alpha(Palette::GREEN, 0.35), 1.5);
     let hist = ctx.state.history.cpu.values(ctx.state.now);
@@ -205,7 +222,12 @@ fn middle(ctx: &mut Ctx, r: Rect, sys: &SysState) {
         ("USED", used as f32 / total, gb(used), Palette::GREEN),
         ("CACHED", cached as f32 / total, gb(cached), Palette::CYAN),
         ("AVAIL", sys.mem_available as f32 / total, gb(sys.mem_available), Palette::LCD),
-        ("SWAP", sys.swap_used as f32 / sys.swap_total.max(1) as f32, format!("{}/{}", gb(sys.swap_used), gb(sys.swap_total)), Palette::AMBER),
+        (
+            "SWAP",
+            sys.swap_used as f32 / sys.swap_total.max(1) as f32,
+            format!("{}/{}", gb(sys.swap_used), gb(sys.swap_total)),
+            Palette::AMBER,
+        ),
     ];
     for (label, frac, value, color) in rows {
         bar_row(ctx, r.x, y, r.w, label, frac, &value, color);
@@ -242,7 +264,15 @@ fn middle(ctx: &mut Ctx, r: Rect, sys: &SysState) {
     let temps = [("CPU PKG", sys.temp_cpu_c), ("NVME", sys.temp_nvme_c), ("ACPI", sys.temp_acpi_c)];
     for (label, t) in temps {
         let frac = t.map_or(0.0, |t| (t / 100.0).clamp(0.0, 1.0));
-        let color = t.map_or(Palette::DIM, |t| if t >= 90.0 { Palette::RED } else if t >= 75.0 { Palette::AMBER } else { Palette::GREEN });
+        let color = t.map_or(Palette::DIM, |t| {
+            if t >= 90.0 {
+                Palette::RED
+            } else if t >= 75.0 {
+                Palette::AMBER
+            } else {
+                Palette::GREEN
+            }
+        });
         bar_row(ctx, r.x, y, r.w, label, frac, &t.map_or("N/A".into(), |t| format!("{t:.0}°C")), color);
         y += 32.0;
     }
@@ -261,14 +291,26 @@ fn right(ctx: &mut Ctx, r: Rect, sys: &SysState) {
     };
     for (path, used, total) in mounts {
         let frac = used as f32 / total.max(1) as f32;
-        let color = if frac > 0.9 { Palette::RED } else if frac > 0.75 { Palette::AMBER } else { Palette::GREEN };
+        let color = if frac > 0.9 {
+            Palette::RED
+        } else if frac > 0.75 {
+            Palette::AMBER
+        } else {
+            Palette::GREEN
+        };
         let label = gfx::ellipsize(ctx.canvas, &gfx::text_paint(&fonts.label(), 22.0, Palette::WHITE), &path, 90.0);
         bar_row(ctx, r.x, y, r.w, &label, frac, &format!("{:.0}%·{}", frac * 100.0, gb(total)), color);
         y += 32.0;
     }
     if let Some(d) = &sys.disk {
         let vp = gfx::text_paint(&fonts.mono(), 22.0, gfx::alpha(Palette::WHITE, 0.7));
-        gfx::text(ctx.canvas, r.x, y, &format!("NVME R {}/s · W {}/s", fmt_rate(d.read_bps), fmt_rate(d.write_bps)), &vp);
+        gfx::text(
+            ctx.canvas,
+            r.x,
+            y,
+            &format!("NVME R {}/s · W {}/s", fmt_rate(d.read_bps), fmt_rate(d.write_bps)),
+            &vp,
+        );
         y += 30.0;
     }
 
@@ -281,7 +323,9 @@ fn right(ctx: &mut Ctx, r: Rect, sys: &SysState) {
     gfx::text(c, r.right(), y, "↑ TX", &hp);
     y += 30.0;
     let ifaces: Vec<(String, f64, f64, bool)> = match &sysx {
-        Some(x) if !x.ifaces.is_empty() => x.ifaces.iter().take(3).map(|i| (i.name.clone(), i.rx_bps, i.tx_bps, i.up)).collect(),
+        Some(x) if !x.ifaces.is_empty() => {
+            x.ifaces.iter().take(3).map(|i| (i.name.clone(), i.rx_bps, i.tx_bps, i.up)).collect()
+        }
         _ => vec![("ALL".into(), sys.net.rx_bps, sys.net.tx_bps, true)],
     };
     let vp = gfx::text_paint(&fonts.mono(), 24.0, Palette::WHITE);
@@ -313,7 +357,13 @@ fn right(ctx: &mut Ctx, r: Rect, sys: &SysState) {
     c.stroke_path(&grid, &Paint::color(gfx::alpha(Palette::CYAN, 0.12)).with_line_width(1.0));
     for i in 1..6 {
         for j in 1..4 {
-            plate::crosshair(c, scope.x + scope.w * i as f32 / 6.0, scope.y + scope.h * j as f32 / 4.0, 6.0, gfx::alpha(Palette::CYAN, 0.45));
+            plate::crosshair(
+                c,
+                scope.x + scope.w * i as f32 / 6.0,
+                scope.y + scope.h * j as f32 / 4.0,
+                6.0,
+                gfx::alpha(Palette::CYAN, 0.45),
+            );
         }
     }
     let rx = ctx.state.history.net_rx.values(ctx.state.now);
@@ -327,7 +377,13 @@ fn right(ctx: &mut Ctx, r: Rect, sys: &SysState) {
     let c = &mut *ctx.canvas;
     let sp = gfx::text_paint(&fonts.mono(), 22.0, Palette::CYAN);
     let w = gfx::text(c, scope.x, scope.bottom() + 26.0, &format!("↓{}", fmt_rate(sys.net.rx_bps)), &sp);
-    gfx::text(c, scope.x + w + 20.0, scope.bottom() + 26.0, &format!("↑{}", fmt_rate(sys.net.tx_bps)), &sp.with_color(Palette::MAGENTA));
+    gfx::text(
+        c,
+        scope.x + w + 20.0,
+        scope.bottom() + 26.0,
+        &format!("↑{}", fmt_rate(sys.net.tx_bps)),
+        &sp.with_color(Palette::MAGENTA),
+    );
     let mp = gfx::text_paint(&fonts.mono(), 22.0, gfx::alpha(Palette::WHITE, 0.5)).with_text_align(Align::Right);
     gfx::text(c, scope.right(), scope.bottom() + 26.0, &format!("MAX {}", fmt_rate(top as f64)), &mp);
 }

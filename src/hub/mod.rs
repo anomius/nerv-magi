@@ -29,7 +29,8 @@ pub fn run(args: HubArgs) -> anyhow::Result<()> {
             if event::poll(FRAME)? {
                 if let Event::Key(k) = event::read()? {
                     let ctrl_c = k.code == KeyCode::Char('c') && k.modifiers.contains(KeyModifiers::CONTROL);
-                    if k.kind == KeyEventKind::Press && (ctrl_c || matches!(k.code, KeyCode::Char('q') | KeyCode::Esc)) {
+                    if k.kind == KeyEventKind::Press && (ctrl_c || matches!(k.code, KeyCode::Char('q') | KeyCode::Esc))
+                    {
                         return Ok(());
                     }
                 }

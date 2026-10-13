@@ -33,7 +33,14 @@ pub fn key_name(key: &Key) -> Option<String> {
 /// Toggles must not flip again on key auto-repeat (holding `f` would flicker fullscreen and
 /// reallocate the base layer each time); stepping (Next/Prev) and idempotent picks may repeat.
 pub fn repeat_ignored(cmd: TvCommand) -> bool {
-    matches!(cmd, TvCommand::TogglePin | TvCommand::ToggleFullscreen | TvCommand::Scanlines | TvCommand::ToggleGrain | TvCommand::ToggleHelp)
+    matches!(
+        cmd,
+        TvCommand::TogglePin
+            | TvCommand::ToggleFullscreen
+            | TvCommand::Scanlines
+            | TvCommand::ToggleGrain
+            | TvCommand::ToggleHelp
+    )
 }
 
 /// Seconds after the window appears or regains focus during which key presses are dropped.
@@ -120,7 +127,10 @@ mod tests {
         assert_eq!(key_name(&Key::Named(NamedKey::Shift)), None);
         assert_eq!(key_command(&key_name(&Key::Named(NamedKey::Space)).unwrap(), false), Some(TvCommand::TogglePin));
         assert_eq!(key_command(&key_name(&Key::Character("G".into())).unwrap(), true), Some(TvCommand::ToggleGrain));
-        assert_eq!(key_command(&key_name(&Key::Character("4".into())).unwrap(), false), Some(TvCommand::View(ViewName::Emergency)));
+        assert_eq!(
+            key_command(&key_name(&Key::Character("4".into())).unwrap(), false),
+            Some(TvCommand::View(ViewName::Emergency))
+        );
     }
 
     #[test]
@@ -137,7 +147,13 @@ mod tests {
 
     #[test]
     fn auto_repeat_never_flips_a_toggle() {
-        for cmd in [TvCommand::TogglePin, TvCommand::ToggleFullscreen, TvCommand::Scanlines, TvCommand::ToggleGrain, TvCommand::ToggleHelp] {
+        for cmd in [
+            TvCommand::TogglePin,
+            TvCommand::ToggleFullscreen,
+            TvCommand::Scanlines,
+            TvCommand::ToggleGrain,
+            TvCommand::ToggleHelp,
+        ] {
             assert!(repeat_ignored(cmd), "{cmd:?}");
         }
         // stepping and idempotent picks may repeat

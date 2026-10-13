@@ -10,7 +10,14 @@ use crate::tv::layout::Rect;
 
 /// Both tape reels (outer ring, hub, three spokes each) in two paths.
 /// Tape reels: the rings never move (base layer), the spokes turn (live layer).
-fn reels(c: &mut gfx::Cv, centers: [(f32, f32); 2], radius: f32, angles: [f32; 2], live: bool, layer: crate::tv::layers::Layer) {
+fn reels(
+    c: &mut gfx::Cv,
+    centers: [(f32, f32); 2],
+    radius: f32,
+    angles: [f32; 2],
+    live: bool,
+    layer: crate::tv::layers::Layer,
+) {
     let color = if live { Palette::ORANGE } else { gfx::alpha(Palette::ORANGE, 0.45) };
     if layer.base() {
         let mut rings = Path::new();
@@ -100,7 +107,11 @@ pub fn draw(ctx: &mut Ctx, r: Rect) {
     if let Some(m) = &media {
         let pos = m.position_at(ctx.state.now);
         if let Some(len) = m.length_s.filter(|l| *l > 0.0) {
-            gfx::fill_rect(c, Rect::new(rail.x, rail.y, rail.w * (pos / len).clamp(0.0, 1.0) as f32, rail.h), Palette::CYAN);
+            gfx::fill_rect(
+                c,
+                Rect::new(rail.x, rail.y, rail.w * (pos / len).clamp(0.0, 1.0) as f32, rail.h),
+                Palette::CYAN,
+            );
         }
         let tp = gfx::text_paint(&fonts.mono(), 26.0, Palette::WHITE).with_text_align(Align::Right);
         let len = m.length_s.map_or("--:--".to_string(), mmss);
@@ -123,7 +134,14 @@ pub fn draw(ctx: &mut Ctx, r: Rect) {
             let vtw = gfx::text(c, vx + vw + 12.0, y, &vol, &vp);
             let bx = vx + vw + vtw + 32.0;
             if r.right() - 40.0 - bx > 60.0 {
-                gfx::seg_bar(c, Rect::new(bx, y - 18.0, r.right() - 40.0 - bx, 18.0), (a.volume / 1.5).clamp(0.0, 1.0), 30, if a.muted { gfx::alpha(Palette::RED, 0.5) } else { Palette::LCD }, gfx::alpha(Palette::DIM, 0.3));
+                gfx::seg_bar(
+                    c,
+                    Rect::new(bx, y - 18.0, r.right() - 40.0 - bx, 18.0),
+                    (a.volume / 1.5).clamp(0.0, 1.0),
+                    30,
+                    if a.muted { gfx::alpha(Palette::RED, 0.5) } else { Palette::LCD },
+                    gfx::alpha(Palette::DIM, 0.3),
+                );
             }
         }
         None => {

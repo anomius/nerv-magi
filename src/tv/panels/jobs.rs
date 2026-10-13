@@ -21,7 +21,8 @@ pub fn draw(ctx: &mut Ctx, r: Rect) {
     let fonts = ctx.fonts;
     let jobs = order_jobs(&ctx.state.jobs, &ctx.state.herdr.agents);
     let c = &mut *ctx.canvas;
-    let count = gfx::text_paint(&fonts.mono(), 24.0, gfx::alpha(Palette::ORANGE, 0.9)).with_text_align(femtovg::Align::Right);
+    let count =
+        gfx::text_paint(&fonts.mono(), 24.0, gfx::alpha(Palette::ORANGE, 0.9)).with_text_align(femtovg::Align::Right);
     let s = format!("{} RUNNING PANES", jobs.len());
     let w = gfx::text_width(c, &s, &count);
     gfx::fill_rect(c, Rect::new(r.right() - 60.0 - w, r.y + 2.0, w + 24.0, 30.0), Palette::PANEL);
@@ -210,7 +211,14 @@ mod tests {
     use std::time::Duration;
 
     fn job(ws: &str, label: &str) -> PaneJob {
-        PaneJob { pane_id: format!("{ws}:{label}"), workspace_label: ws.into(), tab_label: "t".into(), label: label.into(), command: "cmd".into(), cwd: "~".into() }
+        PaneJob {
+            pane_id: format!("{ws}:{label}"),
+            workspace_label: ws.into(),
+            tab_label: "t".into(),
+            label: label.into(),
+            command: "cmd".into(),
+            cwd: "~".into(),
+        }
     }
 
     #[test]

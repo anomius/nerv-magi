@@ -81,7 +81,11 @@ pub fn status_kb(text: &str, key: &str) -> Option<u64> {
 
 /// CPU seconds over wall seconds, as % of one core.
 pub fn cpu_pct(cpu_s: f64, wall_s: f64) -> f64 {
-    if wall_s <= 0.0 { 0.0 } else { cpu_s / wall_s * 100.0 }
+    if wall_s <= 0.0 {
+        0.0
+    } else {
+        cpu_s / wall_s * 100.0
+    }
 }
 
 /// User + system CPU seconds of the whole process (all threads, collectors included).
@@ -154,14 +158,25 @@ pub fn run(args: &TvArgs, config: Config, secs: u32) -> anyhow::Result<()> {
         .collect();
     per.sort_by(|a, b| b.1.total_cmp(&a.1));
     println!("  threads: {}", per.iter().map(|(n, p)| format!("{n} {p:.2}%")).collect::<Vec<_>>().join(" · "));
-    println!("  worst frames: {}", worst.iter().map(|(c, t, s)| format!("{:.1} ms @{t:.2}s {s}", c * 1e3)).collect::<Vec<_>>().join(" · "));
+    println!(
+        "  worst frames: {}",
+        worst.iter().map(|(c, t, s)| format!("{:.1} ms @{t:.2}s {s}", c * 1e3)).collect::<Vec<_>>().join(" · ")
+    );
     if let Some(p) = &view.prof {
-        let s: Vec<String> = p.phases.iter().map(|(n, c, k)| format!("{n} {:.2}% ({k}×, {:.2} ms)", cpu_pct(*c, wall), c / *k as f64 * 1e3)).collect();
+        let s: Vec<String> = p
+            .phases
+            .iter()
+            .map(|(n, c, k)| format!("{n} {:.2}% ({k}×, {:.2} ms)", cpu_pct(*c, wall), c / *k as f64 * 1e3))
+            .collect();
         println!("  render: {}", s.join(" · "));
     }
     if let Some(mut p) = SPANS.with(|s| s.borrow_mut().take()) {
         p.phases.sort_by(|a, b| b.1.total_cmp(&a.1));
-        let s: Vec<String> = p.phases.iter().map(|(n, c, k)| format!("{n} {:.2}% ({:.3} ms)", cpu_pct(*c, wall), c / *k as f64 * 1e3)).collect();
+        let s: Vec<String> = p
+            .phases
+            .iter()
+            .map(|(n, c, k)| format!("{n} {:.2}% ({:.3} ms)", cpu_pct(*c, wall), c / *k as f64 * 1e3))
+            .collect();
         println!("  spans: {}", s.join(" · "));
     }
     Ok(())

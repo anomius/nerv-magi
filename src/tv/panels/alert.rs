@@ -89,12 +89,19 @@ pub fn status_strip(ctx: &mut Ctx, r: Rect) {
     tab.close();
     c.fill_path(&tab, &Paint::color(gfx::alpha(Palette::ORANGE, 0.9)));
     gfx::text(c, text_x, base, "PILOT STATUS", &tab_text);
-    let hp = gfx::text_paint(&ctx.fonts.label(), 24.0, gfx::alpha(Palette::WHITE, 0.4)).with_letter_spacing(2.0).with_text_align(femtovg::Align::Right);
+    let hp = gfx::text_paint(&ctx.fonts.label(), 24.0, gfx::alpha(Palette::WHITE, 0.4))
+        .with_letter_spacing(2.0)
+        .with_text_align(femtovg::Align::Right);
     gfx::text(c, slant_x(full, STRIP_SLOPE, base, false) - 20.0, base, "? HELP", &hp);
     let cy = r.y + r.h / 2.0;
     let n = st.counts();
     let mut x = r.x + tab_w + 12.0;
-    for (count, s) in [(n.blocked, AgentStatus::Blocked), (n.working, AgentStatus::Working), (n.done, AgentStatus::Done), (n.idle, AgentStatus::Idle)] {
+    for (count, s) in [
+        (n.blocked, AgentStatus::Blocked),
+        (n.working, AgentStatus::Working),
+        (n.done, AgentStatus::Done),
+        (n.idle, AgentStatus::Idle),
+    ] {
         let color = if count > 0 { status_color(s) } else { Palette::DIM };
         status_icon(c, x, cy, 24.0, s);
         x += 36.0;
@@ -130,28 +137,45 @@ pub fn status_strip(ctx: &mut Ctx, r: Rect) {
     let (link, lc) = match &st.herdr.link {
         HerdrLink::Linked => ("LINKED".to_string(), Palette::GREEN),
         HerdrLink::Connecting => ("CONNECTING".to_string(), Palette::AMBER),
-        HerdrLink::Lost { since, .. } => (format!("LOST {}", fmt_age(st.now.duration_since(*since).unwrap_or_default())), Palette::AMBER),
+        HerdrLink::Lost { since, .. } => {
+            (format!("LOST {}", fmt_age(st.now.duration_since(*since).unwrap_or_default())), Palette::AMBER)
+        }
     };
     x += gfx::text(c, x, base, &link, &gfx::text_paint(&ctx.fonts.mono(), 26.0, lc)) + 24.0;
     let info = format!("{} AGENTS · {} WS", st.herdr.agents.len(), st.herdr.workspaces.len());
-    x += gfx::text(c, x, base, &info, &gfx::text_paint(&ctx.fonts.mono(), 24.0, gfx::alpha(Palette::WHITE, 0.6))) + 40.0;
+    x +=
+        gfx::text(c, x, base, &info, &gfx::text_paint(&ctx.fonts.mono(), 24.0, gfx::alpha(Palette::WHITE, 0.6))) + 40.0;
     sep(c, x - 20.0, r);
 
     x += 20.0;
     x += gfx::text(c, x, base, "VIEW", &lp) + 14.0;
     let view = match ctx.scene.countdown {
-        Some((next, secs)) => format!("{} · {} · {} IN {:.0}s", ctx.scene.mode.label(), ctx.scene.scene.name(), next.name(), secs.ceil()),
+        Some((next, secs)) => {
+            format!("{} · {} · {} IN {:.0}s", ctx.scene.mode.label(), ctx.scene.scene.name(), next.name(), secs.ceil())
+        }
         None => ctx.scene.mode.label(),
     };
     let pinned = ctx.scene.mode != crate::control::ViewMode::Auto;
-    x += gfx::text(c, x, base, &view, &gfx::text_paint(&ctx.fonts.mono(), 24.0, if pinned { Palette::AMBER } else { Palette::CYAN })) + 40.0;
+    x += gfx::text(
+        c,
+        x,
+        base,
+        &view,
+        &gfx::text_paint(&ctx.fonts.mono(), 24.0, if pinned { Palette::AMBER } else { Palette::CYAN }),
+    ) + 40.0;
     sep(c, x - 20.0, r);
     let limits = crate::tv::usage::limits_line(&st.limits, st.now);
     if !limits.is_empty() {
         x += 20.0;
         x += gfx::text(c, x, base, "LIMITS", &lp) + 14.0;
         let worst = st.limits.iter().flat_map(|l| l.windows.iter()).map(|w| w.used_pct).fold(0.0f32, f32::max);
-        let lc = if worst >= 95.0 { Palette::RED } else if worst >= 80.0 { Palette::AMBER } else { gfx::alpha(Palette::WHITE, 0.85) };
+        let lc = if worst >= 95.0 {
+            Palette::RED
+        } else if worst >= 80.0 {
+            Palette::AMBER
+        } else {
+            gfx::alpha(Palette::WHITE, 0.85)
+        };
         let lpaint = gfx::text_paint(&ctx.fonts.mono(), 24.0, lc);
         let fit = gfx::ellipsize(c, &lpaint, &limits, (r.right() - HINT_W - x).clamp(0.0, 980.0));
         x += gfx::text(c, x, base, &fit, &lpaint) + 40.0;
@@ -162,7 +186,8 @@ pub fn status_strip(ctx: &mut Ctx, r: Rect) {
         x += gfx::text(c, x, base, "SOURCES", &lp) + 14.0;
         let names: Vec<String> = st.offline.keys().map(|k| format!("{k:?}").to_uppercase()).collect();
         let sp = gfx::text_paint(&ctx.fonts.mono(), 24.0, Palette::AMBER);
-        let fit = gfx::ellipsize(c, &sp, &format!("OFFLINE {}", names.join(" ")), (r.right() - HINT_W - x).clamp(0.0, 300.0));
+        let fit =
+            gfx::ellipsize(c, &sp, &format!("OFFLINE {}", names.join(" ")), (r.right() - HINT_W - x).clamp(0.0, 300.0));
         x += gfx::text(c, x, base, &fit, &sp) + 40.0;
         sep(c, x - 20.0, r);
     }
@@ -196,7 +221,11 @@ const STRIP_SLOPE: f32 = 56.0;
 /// (x + slope, top) to (x, bottom), the right one from (right, top) to (right − slope, bottom).
 pub fn slant_x(r: Rect, slope: f32, y: f32, left: bool) -> f32 {
     let down = ((y - r.y) / r.h).clamp(0.0, 1.0) * slope;
-    if left { r.x + slope - down } else { r.right() - down }
+    if left {
+        r.x + slope - down
+    } else {
+        r.right() - down
+    }
 }
 
 fn sep(c: &mut gfx::Cv, x: f32, r: Rect) {

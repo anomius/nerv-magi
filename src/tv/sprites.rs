@@ -110,7 +110,14 @@ fn build(c: &mut Cv, key: Key, paint: &Paint, target: RenderTarget) -> Option<Sp
         let advances: Vec<f32> = DIGITS.chars().map(|ch| gfx::text_width(c, &ch.to_string(), &p)).collect();
         let (xs, w) = atlas_cells(&advances, pad);
         let h = ascent + descent + 2.0 * pad;
-        let image = c.create_image_empty(w as usize, h as usize, PixelFormat::Rgba8, ImageFlags::FLIP_Y | ImageFlags::PREMULTIPLIED).ok()?;
+        let image = c
+            .create_image_empty(
+                w as usize,
+                h as usize,
+                PixelFormat::Rgba8,
+                ImageFlags::FLIP_Y | ImageFlags::PREMULTIPLIED,
+            )
+            .ok()?;
         c.set_render_target(RenderTarget::Image(image));
         c.clear_rect(0, 0, w as u32, h as u32, Color::rgbaf(0.0, 0.0, 0.0, 0.0));
         for (ch, x) in DIGITS.chars().zip(&xs) {
@@ -129,9 +136,22 @@ fn build(c: &mut Cv, key: Key, paint: &Paint, target: RenderTarget) -> Option<Sp
 /// uses apart. Characters outside DIGITS are skipped; if the atlas cannot be built it falls back
 /// to plain glow text.
 #[allow(clippy::too_many_arguments)]
-pub fn glow_text(c: &mut Cv, cache: &mut Cache, name: &'static str, x: f32, y: f32, s: &str, paint: &Paint, color: Color, glow: Color, blur: f32) -> f32 {
+pub fn glow_text(
+    c: &mut Cv,
+    cache: &mut Cache,
+    name: &'static str,
+    x: f32,
+    y: f32,
+    s: &str,
+    paint: &Paint,
+    color: Color,
+    glow: Color,
+    blur: f32,
+) -> f32 {
     let key = Key { name, size: paint.font_size(), color, glow, blur, bloom: gfx::bloom(), scale: cache.scale };
-    let Some(i) = cache.get(c, key, paint) else { return gfx::glow_text(c, x, y, s, &paint.clone().with_color(color), glow, blur) };
+    let Some(i) = cache.get(c, key, paint) else {
+        return gfx::glow_text(c, x, y, s, &paint.clone().with_color(color), glow, blur);
+    };
     let f = &cache.fonts[i];
     let k = cache.scale;
     let lookup = |ch: char| f.chars.iter().find(|e| e.0 == ch).copied();

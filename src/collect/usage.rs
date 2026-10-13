@@ -43,7 +43,13 @@ fn days_from_civil(y: i64, m: i64, d: i64) -> i64 {
 /// `2026-10-13T08:17:26.984Z` / `…+05:30` → SystemTime.
 pub fn parse_rfc3339(s: &str) -> Option<SystemTime> {
     let b = s.as_bytes();
-    if b.len() < 20 || b[4] != b'-' || b[7] != b'-' || !matches!(b[10], b'T' | b't' | b' ') || b[13] != b':' || b[16] != b':' {
+    if b.len() < 20
+        || b[4] != b'-'
+        || b[7] != b'-'
+        || !matches!(b[10], b'T' | b't' | b' ')
+        || b[13] != b':'
+        || b[16] != b':'
+    {
         return None;
     }
     let num = |from: usize, to: usize| s.get(from..to)?.parse::<i64>().ok();
@@ -196,7 +202,8 @@ impl ClaudeLog {
         });
         let context_used =
             self.latest.as_ref().and_then(|id| self.messages.get(id)).map(|t| t.input + t.cache_read + t.cache_write);
-        let one_m = self.model.as_deref().is_some_and(|m| m.ends_with("[1m]")) || context_used.is_some_and(|c| c > CLAUDE_WINDOW);
+        let one_m = self.model.as_deref().is_some_and(|m| m.ends_with("[1m]"))
+            || context_used.is_some_and(|c| c > CLAUDE_WINDOW);
         AgentUsage {
             model: self.model.clone(),
             effort: self.effort.clone(),
@@ -425,7 +432,8 @@ impl Roots {
     /// `$CLAUDE_CONFIG_DIR` / `$CODEX_HOME` when set, else `~/.claude` / `~/.codex`.
     pub fn from_env() -> Self {
         let home = std::env::var_os("HOME").map(PathBuf::from).unwrap_or_default();
-        let dir = |var: &str, fallback: &str| std::env::var_os(var).map(PathBuf::from).unwrap_or_else(|| home.join(fallback));
+        let dir =
+            |var: &str, fallback: &str| std::env::var_os(var).map(PathBuf::from).unwrap_or_else(|| home.join(fallback));
         Self {
             claude_projects: dir("CLAUDE_CONFIG_DIR", ".claude").join("projects"),
             codex_sessions: dir("CODEX_HOME", ".codex").join("sessions"),
@@ -435,7 +443,8 @@ impl Roots {
 }
 
 fn sorted_dirs(dir: &Path) -> Vec<PathBuf> {
-    let mut v: Vec<PathBuf> = fs::read_dir(dir).into_iter().flatten().flatten().map(|e| e.path()).filter(|p| p.is_dir()).collect();
+    let mut v: Vec<PathBuf> =
+        fs::read_dir(dir).into_iter().flatten().flatten().map(|e| e.path()).filter(|p| p.is_dir()).collect();
     v.sort();
     v
 }
@@ -453,16 +462,15 @@ pub fn find_codex(sessions: &Path, sid: &str, max_days: usize) -> Option<PathBuf
         v.reverse();
         v
     };
-    newest_first(sessions)
-        .iter()
-        .flat_map(|y| newest_first(y))
-        .flat_map(|m| newest_first(&m))
-        .take(max_days)
-        .find_map(|day| {
+    newest_first(sessions).iter().flat_map(|y| newest_first(y)).flat_map(|m| newest_first(&m)).take(max_days).find_map(
+        |day| {
             fs::read_dir(&day).into_iter().flatten().flatten().map(|e| e.path()).find(|p| {
-                p.file_name().and_then(|n| n.to_str()).is_some_and(|n| n.starts_with("rollout-") && n.ends_with(&suffix))
+                p.file_name()
+                    .and_then(|n| n.to_str())
+                    .is_some_and(|n| n.starts_with("rollout-") && n.ends_with(&suffix))
             })
-        })
+        },
+    )
 }
 
 fn read_json(path: &Path) -> Option<Value> {
@@ -606,7 +614,9 @@ impl Collector {
                 if u.mode.is_none() {
                     u.mode = s.argv_mode.get_or_insert_with(|| argv_mode(t)).clone();
                 }
-                if let Some(status) = self.roots.status_dir.as_ref().and_then(|d| read_json(&d.join(format!("{}.json", t.session)))) {
+                if let Some(status) =
+                    self.roots.status_dir.as_ref().and_then(|d| read_json(&d.join(format!("{}.json", t.session))))
+                {
                     apply_status(&mut u, &status);
                 }
             }
@@ -679,7 +689,10 @@ mod tests {
     #[test]
     fn rfc3339_parses_utc_fraction_and_offsets() {
         assert_eq!(parse_rfc3339("1970-01-01T00:00:00Z"), Some(UNIX_EPOCH));
-        assert_eq!(parse_rfc3339("2026-10-13T08:17:26.984Z"), Some(UNIX_EPOCH + Duration::from_millis(1_791_879_446_984)));
+        assert_eq!(
+            parse_rfc3339("2026-10-13T08:17:26.984Z"),
+            Some(UNIX_EPOCH + Duration::from_millis(1_791_879_446_984))
+        );
         assert_eq!(parse_rfc3339("2026-10-13T13:30:00+05:30"), at(1_791_878_400));
         assert_eq!(parse_rfc3339("2000-02-29T23:59:59Z"), at(951_868_799));
         assert_eq!(parse_rfc3339("2026-13-01T00:00:00Z"), None);
@@ -700,7 +713,10 @@ mod tests {
     fn claude_context_comes_from_the_latest_message() {
         let u = fed::<ClaudeLog>(&fixture("claude_session.jsonl")).usage();
         assert_eq!(u.context_used, Some(4 + 1000 + 200));
-        assert_eq!((u.effort.as_deref(), u.version.as_deref(), u.mode.as_deref()), (Some("xhigh"), Some("2.1.297"), Some("auto")));
+        assert_eq!(
+            (u.effort.as_deref(), u.version.as_deref(), u.mode.as_deref()),
+            (Some("xhigh"), Some("2.1.297"), Some("auto"))
+        );
         assert_eq!((u.session_started, u.last_activity), (at(1_791_878_400), at(1_791_878_460)));
         assert_eq!((u.context_window, u.context_window_estimated), (Some(200_000), true));
     }
@@ -729,7 +745,8 @@ mod tests {
         assert_eq!((u.context_window, u.context_window_estimated, u.cost_usd), (Some(1_000_000), false, Some(3.2)));
         let l = claude_limits(&status, UNIX_EPOCH).unwrap();
         assert_eq!(l.provider, "claude");
-        let w: Vec<(&str, f32, Option<SystemTime>)> = l.windows.iter().map(|w| (w.label.as_str(), w.used_pct, w.resets_at)).collect();
+        let w: Vec<(&str, f32, Option<SystemTime>)> =
+            l.windows.iter().map(|w| (w.label.as_str(), w.used_pct, w.resets_at)).collect();
         assert_eq!(w, [("5H", 37.0, at(1_791_900_000)), ("7D", 12.5, at(1_792_454_400))]);
         assert_eq!(claude_limits(&serde_json::json!({"cost": {}}), UNIX_EPOCH), None);
     }
@@ -738,21 +755,37 @@ mod tests {
     fn codex_totals_context_and_plan_limits() {
         let log = fed::<CodexLog>(&fixture("codex_rollout.jsonl"));
         let u = log.usage();
-        assert_eq!((u.model.as_deref(), u.effort.as_deref(), u.mode.as_deref()), (Some("gpt-6-luna"), Some("high"), Some("on-request")));
+        assert_eq!(
+            (u.model.as_deref(), u.effort.as_deref(), u.mode.as_deref()),
+            (Some("gpt-6-luna"), Some("high"), Some("on-request"))
+        );
         assert_eq!((u.version.as_deref(), u.turns), (Some("0.162.1"), 2));
-        assert_eq!((u.input_tokens, u.cache_read_tokens, u.output_tokens, u.reasoning_tokens), (10_000, 30_000, 900, 400));
-        assert_eq!((u.context_used, u.context_window, u.context_window_estimated), (Some(23_522), Some(258_400), false));
+        assert_eq!(
+            (u.input_tokens, u.cache_read_tokens, u.output_tokens, u.reasoning_tokens),
+            (10_000, 30_000, 900, 400)
+        );
+        assert_eq!(
+            (u.context_used, u.context_window, u.context_window_estimated),
+            (Some(23_522), Some(258_400), false)
+        );
         assert_eq!((u.session_started, u.last_activity), (at(1_791_878_400), at(1_791_878_730)));
         let l = log.limits().unwrap();
-        assert_eq!((l.provider.as_str(), l.plan.as_deref(), l.credits.as_deref()), ("codex", Some("pro"), Some("62500")));
-        let w: Vec<(&str, f32, Option<u32>)> = l.windows.iter().map(|w| (w.label.as_str(), w.used_pct, w.window_minutes)).collect();
+        assert_eq!(
+            (l.provider.as_str(), l.plan.as_deref(), l.credits.as_deref()),
+            ("codex", Some("pro"), Some("62500"))
+        );
+        let w: Vec<(&str, f32, Option<u32>)> =
+            l.windows.iter().map(|w| (w.label.as_str(), w.used_pct, w.window_minutes)).collect();
         assert_eq!(w, [("WEEK", 17.0, Some(10080)), ("5H", 42.0, Some(300))]);
         assert_eq!(l.observed_at, at(1_791_878_730));
     }
 
     #[test]
     fn window_labels_and_credit_trimming() {
-        assert_eq!((window_label(300), window_label(10080), window_label(60)), ("5H".to_string(), "WEEK".to_string(), "60M".to_string()));
+        assert_eq!(
+            (window_label(300), window_label(10080), window_label(60)),
+            ("5H".to_string(), "WEEK".to_string(), "60M".to_string())
+        );
         assert_eq!(trim_credits("62500.0000000000"), "62500");
         assert_eq!(trim_credits("12.5000"), "12.5");
         let unlimited = serde_json::json!({"primary": null, "credits": {"has_credits": true, "unlimited": true, "balance": "0"}, "plan_type": "team"});
@@ -800,7 +833,8 @@ mod tests {
         std::fs::OpenOptions::new().append(true).open(&tail.path).unwrap().write_all(b"\n").unwrap();
         tail.read_new(&mut got).unwrap();
         assert_eq!(got.0.len(), 3);
-        assert!(tail.partial.capacity() <= 64 * 1024, "kept {} bytes", tail.partial.capacity()); // …but not its buffer
+        assert!(tail.partial.capacity() <= 64 * 1024, "kept {} bytes", tail.partial.capacity());
+        // …but not its buffer
     }
 
     #[test]
@@ -826,7 +860,11 @@ mod tests {
     #[test]
     fn collector_rows_only_for_found_logs_and_follows_appends() {
         let d = tempfile::tempdir().unwrap();
-        let roots = Roots { claude_projects: d.path().join("claude"), codex_sessions: d.path().join("codex"), status_dir: Some(d.path().join("status")) };
+        let roots = Roots {
+            claude_projects: d.path().join("claude"),
+            codex_sessions: d.path().join("codex"),
+            status_dir: Some(d.path().join("status")),
+        };
         let transcript = d.path().join(format!("claude/-proj/{CLAUDE_SID}.jsonl"));
         std::fs::create_dir_all(transcript.parent().unwrap()).unwrap();
         std::fs::write(&transcript, fixture("claude_session.jsonl")).unwrap();
@@ -885,7 +923,10 @@ mod tests {
         }
         assert_eq!(calls, 1, "argv is asked once per session");
         let argv = |a: &[&str]| a.iter().map(|s| s.to_string()).collect::<Vec<_>>();
-        assert_eq!(mode_from_argv(&argv(&["claude", "--model", "x", "--permission-mode", "auto"])).as_deref(), Some("auto"));
+        assert_eq!(
+            mode_from_argv(&argv(&["claude", "--model", "x", "--permission-mode", "auto"])).as_deref(),
+            Some("auto")
+        );
         assert_eq!(mode_from_argv(&argv(&["claude", "--permission-mode=plan"])).as_deref(), Some("plan"));
         assert_eq!(mode_from_argv(&argv(&["claude"])), None);
     }

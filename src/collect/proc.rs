@@ -156,7 +156,9 @@ mod tests {
                 let _ = tx.send(Update::Spectrum(vec![l.parse().unwrap()]));
             })
         });
-        let Update::Spectrum(v) = rx.recv_timeout(Duration::from_secs(5)).unwrap() else { panic!("expected the pid line") };
+        let Update::Spectrum(v) = rx.recv_timeout(Duration::from_secs(5)).unwrap() else {
+            panic!("expected the pid line")
+        };
         let pid = v[0] as i32;
         assert!(std::path::Path::new(&format!("/proc/{pid}")).exists());
         drop(rx);

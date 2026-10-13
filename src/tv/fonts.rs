@@ -91,6 +91,10 @@ pub fn load(canvas: &mut Canvas<OpenGl>, cfg: &FontOverrides, dir: &Path) -> any
             override_path: cfg.mincho.as_ref(),
             families: &["Noto Serif CJK JP", "Noto Serif JP", "Noto Sans CJK JP"],
         })?,
-        segment: one(Slot { file: "DSEG7Classic-BoldItalic.ttf", override_path: cfg.segment.as_ref(), families: MONO })?,
+        segment: one(Slot {
+            file: "DSEG7Classic-BoldItalic.ttf",
+            override_path: cfg.segment.as_ref(),
+            families: MONO,
+        })?,
     })
 }

@@ -67,7 +67,7 @@ mod tests {
         assert!(layered(Scene::Sync, 1.0, false));
         assert!(!layered(Scene::Main, 0.5, false)); // cut running
         assert!(!layered(Scene::Main, 1.0, true)); // flicker / pulse
-        // EMERGENCY can stay up for minutes: its title and cards are base, hazard bars and pulses live
+                                                   // EMERGENCY can stay up for minutes: its title and cards are base, hazard bars and pulses live
         assert!(layered(Scene::Emergency(EmergencyCause::Blocked), 1.0, false));
         assert!(!layered(Scene::Emergency(EmergencyCause::Blocked), 0.5, false));
         assert!(!layered(Scene::Boot { reconnecting: false }, 1.0, false));
@@ -95,7 +95,13 @@ mod tests {
         use crate::state::{AgentStatus, State, Update};
         let mut s = State::new(t0());
         let a = |p: &str, st| agent(p, p, st, "w1");
-        s.apply(Update::HerdrSnapshot { agents: vec![a("p1", AgentStatus::Blocked), a("p2", AgentStatus::Blocked)], workspaces: vec![] }, t0());
+        s.apply(
+            Update::HerdrSnapshot {
+                agents: vec![a("p1", AgentStatus::Blocked), a("p2", AgentStatus::Blocked)],
+                workspaces: vec![],
+            },
+            t0(),
+        );
         let e0 = epoch(&s, false);
         assert_eq!(e0, epoch(&s, false));
         assert_ne!(e0, epoch(&s, true), "preview ↔ real");

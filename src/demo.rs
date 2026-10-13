@@ -110,12 +110,21 @@ pub fn spawn(tx: Sender<Update>) {
                     mem_available: (2.0e9 + 2.5e9 * wave(t, 90.0, 0.0)) as u64,
                     swap_total: 8_000_000_000,
                     swap_used: 1_200_000_000,
-                    gpu: Some(GpuState { mhz: 600 + (1600.0 * wave(t, 9.0, 0.2)) as u32, max_mhz: 2200, busy: wave(t, 9.0, 0.2) as f32 }),
+                    gpu: Some(GpuState {
+                        mhz: 600 + (1600.0 * wave(t, 9.0, 0.2)) as u32,
+                        max_mhz: 2200,
+                        busy: wave(t, 9.0, 0.2) as f32,
+                    }),
                     temp_cpu_c: Some(48.0 + 30.0 * wave(t, 20.0, 0.1) as f32),
                     temp_nvme_c: Some(41.0),
                     temp_acpi_c: Some(45.0),
                     fan_rpm: Some(1800 + (1600.0 * wave(t, 20.0, 0.1)) as u32),
-                    disk: Some(DiskState { used: 610_000_000_000, total: 1_000_000_000_000, read_bps: 2.0e6 * wave(t, 4.0, 0.0), write_bps: 5.0e5 * wave(t, 3.0, 0.5) }),
+                    disk: Some(DiskState {
+                        used: 610_000_000_000,
+                        total: 1_000_000_000_000,
+                        read_bps: 2.0e6 * wave(t, 4.0, 0.0),
+                        write_bps: 5.0e5 * wave(t, 3.0, 0.5),
+                    }),
                     net: NetState { rx_bps: 1.5e6 * wave(t, 5.0, 0.0), tx_bps: 1.2e5 * wave(t, 7.0, 0.3) },
                     load_avg: [2.1, 1.8, 1.5],
                     uptime_s: 86_400 + sec,
@@ -126,11 +135,20 @@ pub fn spawn(tx: Sender<Update>) {
                 let left = (4 * 3600 + 59 * 60 + 56u64).saturating_sub(sec);
                 let _ = tx.send(Update::Power(PowerState {
                     ac_online: false,
-                    battery: Some(Battery { percent: 72.0 - sec as f32 / 600.0, status: BatStatus::Discharging, seconds_left: Some(left), watts: Some(9.4) }),
+                    battery: Some(Battery {
+                        percent: 72.0 - sec as f32 / 600.0,
+                        status: BatStatus::Discharging,
+                        seconds_left: Some(left),
+                        watts: Some(9.4),
+                    }),
                     profile: Profile::Balanced,
                 }));
 
-                let _ = tx.send(Update::Audio(Some(AudioState { sink_name: "WH-1000XM5".into(), volume: 0.6, muted: false })));
+                let _ = tx.send(Update::Audio(Some(AudioState {
+                    sink_name: "WH-1000XM5".into(),
+                    volume: 0.6,
+                    muted: false,
+                })));
                 let track_len = 220.0;
                 let _ = tx.send(Update::Media(Some(MediaState {
                     player: "spotify".into(),
@@ -144,7 +162,8 @@ pub fn spawn(tx: Sender<Update>) {
                 })));
 
                 // density additions
-                let freqs: Vec<u32> = (0..14).map(|c| 800 + (3700.0 * wave(t, 6.0 + c as f64, c as f64 * 0.37)) as u32).collect();
+                let freqs: Vec<u32> =
+                    (0..14).map(|c| 800 + (3700.0 * wave(t, 6.0 + c as f64, c as f64 * 0.37)) as u32).collect();
                 let _ = tx.send(Update::SysExtra(SysExtra {
                     hostname: "nerv-hq".into(),
                     kernel: "7.2.5-3-omarchy".into(),
@@ -159,7 +178,12 @@ pub fn spawn(tx: Sender<Update>) {
                         Mount { path: "/boot".into(), used: 210_000_000, total: 2_000_000_000 },
                     ],
                     ifaces: vec![
-                        Iface { name: "wlan0".into(), rx_bps: 1.5e6 * wave(t, 5.0, 0.0), tx_bps: 1.2e5 * wave(t, 7.0, 0.3), up: true },
+                        Iface {
+                            name: "wlan0".into(),
+                            rx_bps: 1.5e6 * wave(t, 5.0, 0.0),
+                            tx_bps: 1.2e5 * wave(t, 7.0, 0.3),
+                            up: true,
+                        },
                         Iface { name: "tailscale0".into(), rx_bps: 2.0e3, tx_bps: 1.1e3, up: true },
                     ],
                 }));
@@ -171,9 +195,21 @@ pub fn spawn(tx: Sender<Update>) {
                     model: Some("4-cell Li-ion".into()),
                 }));
                 let procs = [
-                    ("node", 3.0e9), ("claude", 3.1e8), ("claude", 3.0e8), ("codex", 1.9e8), ("Hyprland", 1.6e8),
-                    ("chromium", 1.2e8), ("postgres", 2.4e8), ("pnpm", 4.1e8), ("cava", 9.0e6), ("pipewire", 2.1e7),
-                    ("herdr", 6.0e7), ("nerv", 4.5e7), ("kitty", 8.0e7), ("docker", 1.1e8), ("python3", 3.3e7),
+                    ("node", 3.0e9),
+                    ("claude", 3.1e8),
+                    ("claude", 3.0e8),
+                    ("codex", 1.9e8),
+                    ("Hyprland", 1.6e8),
+                    ("chromium", 1.2e8),
+                    ("postgres", 2.4e8),
+                    ("pnpm", 4.1e8),
+                    ("cava", 9.0e6),
+                    ("pipewire", 2.1e7),
+                    ("herdr", 6.0e7),
+                    ("nerv", 4.5e7),
+                    ("kitty", 8.0e7),
+                    ("docker", 1.1e8),
+                    ("python3", 3.3e7),
                 ];
                 let mut rows: Vec<ProcRow> = procs
                     .iter()
@@ -181,7 +217,8 @@ pub fn spawn(tx: Sender<Update>) {
                     .map(|(i, (name, rss))| ProcRow {
                         pid: 1000 + i as i32 * 977,
                         name: name.to_string(),
-                        cpu: (140.0 * wave(t, 3.0 + i as f64, i as f64 * 0.21)).max(0.1) as f32 / (1.0 + i as f32 * 0.4),
+                        cpu: (140.0 * wave(t, 3.0 + i as f64, i as f64 * 0.21)).max(0.1) as f32
+                            / (1.0 + i as f32 * 0.4),
                         rss_bytes: *rss as u64,
                         threads: 4 + i as u32 * 3,
                         state: if i % 5 == 0 { 'R' } else { 'S' },
@@ -208,11 +245,14 @@ pub fn spawn(tx: Sender<Update>) {
                         .iter()
                         .enumerate()
                         .map(|(i, (name, _, ws, _))| {
-                            (pane(i), AgentMeta {
-                                cwd: format!("~/code/{}", ws_label(ws)),
-                                branch: Some(format!("feat/{name}")),
-                                session_id: Some(format!("{:08x}-demo", i * 0x1f3a)),
-                            })
+                            (
+                                pane(i),
+                                AgentMeta {
+                                    cwd: format!("~/code/{}", ws_label(ws)),
+                                    branch: Some(format!("feat/{name}")),
+                                    session_id: Some(format!("{:08x}-demo", i * 0x1f3a)),
+                                },
+                            )
                         })
                         .collect();
                     let _ = tx.send(Update::AgentMeta(meta));
@@ -222,25 +262,41 @@ pub fn spawn(tx: Sender<Update>) {
                         .map(|(i, (_, kind, _, _))| {
                             let claude = *kind == "claude";
                             let window: u64 = if claude { 1_000_000 } else { 258_400 };
-                            let used = ((window as f64) * (0.12 + 0.08 * i as f64 + 0.05 * wave(t, 30.0 + i as f64, 0.0))).min(window as f64 * 0.97) as u64;
-                            (pane(i), AgentUsage {
-                                model: Some(if claude { if i % 3 == 2 { "claude-sonnet-5-5" } else { "claude-opus-5-5" } } else { "gpt-6-luna" }.into()),
-                                effort: Some(if claude { "xhigh" } else { "high" }.into()),
-                                mode: Some(if claude { "auto" } else { "on-request" }.into()),
-                                version: Some(if claude { "2.1.296" } else { "0.162.1" }.into()),
-                                context_used: Some(used),
-                                context_window: Some(window),
-                                context_window_estimated: false,
-                                input_tokens: 40_000 + i as u64 * 9_000 + sec * 120,
-                                output_tokens: 18_000 + i as u64 * 4_100 + sec * 35,
-                                cache_read_tokens: 2_500_000 + i as u64 * 900_000 + sec * 9_000,
-                                cache_write_tokens: 120_000 + i as u64 * 30_000,
-                                reasoning_tokens: 6_000 + i as u64 * 1_500,
-                                turns: 40 + i as u32 * 11,
-                                session_started: Some(now - Duration::from_secs(60 * (i as u64 * 9 + 20))),
-                                last_activity: Some(now - Duration::from_secs(i as u64 * 7)),
-                                cost_usd: if claude { Some(1.4 + i as f64 * 0.9) } else { None },
-                            })
+                            let used = ((window as f64)
+                                * (0.12 + 0.08 * i as f64 + 0.05 * wave(t, 30.0 + i as f64, 0.0)))
+                            .min(window as f64 * 0.97) as u64;
+                            (
+                                pane(i),
+                                AgentUsage {
+                                    model: Some(
+                                        if claude {
+                                            if i % 3 == 2 {
+                                                "claude-sonnet-5-5"
+                                            } else {
+                                                "claude-opus-5-5"
+                                            }
+                                        } else {
+                                            "gpt-6-luna"
+                                        }
+                                        .into(),
+                                    ),
+                                    effort: Some(if claude { "xhigh" } else { "high" }.into()),
+                                    mode: Some(if claude { "auto" } else { "on-request" }.into()),
+                                    version: Some(if claude { "2.1.296" } else { "0.162.1" }.into()),
+                                    context_used: Some(used),
+                                    context_window: Some(window),
+                                    context_window_estimated: false,
+                                    input_tokens: 40_000 + i as u64 * 9_000 + sec * 120,
+                                    output_tokens: 18_000 + i as u64 * 4_100 + sec * 35,
+                                    cache_read_tokens: 2_500_000 + i as u64 * 900_000 + sec * 9_000,
+                                    cache_write_tokens: 120_000 + i as u64 * 30_000,
+                                    reasoning_tokens: 6_000 + i as u64 * 1_500,
+                                    turns: 40 + i as u32 * 11,
+                                    session_started: Some(now - Duration::from_secs(60 * (i as u64 * 9 + 20))),
+                                    last_activity: Some(now - Duration::from_secs(i as u64 * 7)),
+                                    cost_usd: if claude { Some(1.4 + i as f64 * 0.9) } else { None },
+                                },
+                            )
                         })
                         .collect();
                     let _ = tx.send(Update::AgentUsage(usage));
@@ -251,8 +307,18 @@ pub fn spawn(tx: Sender<Update>) {
                             provider: "claude".into(),
                             plan: Some("max".into()),
                             windows: vec![
-                                LimitWindow { label: "5H".into(), used_pct: 37.0 + (sec % 600) as f32 / 30.0, resets_at: Some(epoch(now_s + 2 * 3600 + 840)), window_minutes: Some(300) },
-                                LimitWindow { label: "7D".into(), used_pct: 12.0, resets_at: Some(epoch(now_s + 4 * 86400)), window_minutes: Some(10080) },
+                                LimitWindow {
+                                    label: "5H".into(),
+                                    used_pct: 37.0 + (sec % 600) as f32 / 30.0,
+                                    resets_at: Some(epoch(now_s + 2 * 3600 + 840)),
+                                    window_minutes: Some(300),
+                                },
+                                LimitWindow {
+                                    label: "7D".into(),
+                                    used_pct: 12.0,
+                                    resets_at: Some(epoch(now_s + 4 * 86400)),
+                                    window_minutes: Some(10080),
+                                },
                             ],
                             credits: None,
                             observed_at: Some(now),
@@ -260,7 +326,12 @@ pub fn spawn(tx: Sender<Update>) {
                         PlanLimits {
                             provider: "codex".into(),
                             plan: Some("pro".into()),
-                            windows: vec![LimitWindow { label: "WEEK".into(), used_pct: 17.0, resets_at: Some(epoch(now_s + 5 * 86400 + 3600)), window_minutes: Some(10080) }],
+                            windows: vec![LimitWindow {
+                                label: "WEEK".into(),
+                                used_pct: 17.0,
+                                resets_at: Some(epoch(now_s + 5 * 86400 + 3600)),
+                                window_minutes: Some(10080),
+                            }],
                             credits: Some("62500".into()),
                             observed_at: Some(now),
                         },
@@ -275,7 +346,8 @@ pub fn spawn(tx: Sender<Update>) {
                     let _ = tx.send(Update::AgentStatus { pane_id: pane(2), status: AgentStatus::Done, title: None });
                 }
                 if sec % 25 == 20 {
-                    let _ = tx.send(Update::AgentStatus { pane_id: pane(2), status: AgentStatus::Working, title: None });
+                    let _ =
+                        tx.send(Update::AgentStatus { pane_id: pane(2), status: AgentStatus::Working, title: None });
                 }
             }
             thread::sleep(Duration::from_millis(33));

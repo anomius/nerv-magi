@@ -28,7 +28,9 @@ pub fn card_rects(area: Rect, n: usize) -> Vec<Rect> {
     let gap = 28.0;
     let w = (area.w - gap * (per_row as f32 - 1.0)) / per_row as f32;
     let h = (area.h - gap * (rows as f32 - 1.0)) / rows as f32;
-    (0..n).map(|i| Rect::new(area.x + (i % per_row) as f32 * (w + gap), area.y + (i / per_row) as f32 * (h + gap), w, h)).collect()
+    (0..n)
+        .map(|i| Rect::new(area.x + (i % per_row) as f32 * (w + gap), area.y + (i / per_row) as f32 * (h + gap), w, h))
+        .collect()
 }
 
 /// Layers: the hazard bars, the 1 Hz border pulse and the card hexes move (live); title, banner,
@@ -42,10 +44,19 @@ pub fn draw(ctx: &mut Ctx, cause: EmergencyCause) {
         gfx::hazard(c, Rect::new(0.0, 0.0, DESIGN_W, 90.0), t * 0.5, Palette::RED, Palette::BLACK);
         gfx::hazard(c, Rect::new(0.0, DESIGN_H - 90.0, DESIGN_W, 90.0), -t * 0.5, Palette::RED, Palette::BLACK);
         let pulse = 0.5 + 0.5 * (t * std::f32::consts::TAU).cos();
-        gfx::stroke_rect(c, Rect::new(12.0, 102.0, DESIGN_W - 24.0, DESIGN_H - 204.0), gfx::alpha(Palette::RED, 0.35 + 0.65 * pulse), 10.0);
+        gfx::stroke_rect(
+            c,
+            Rect::new(12.0, 102.0, DESIGN_W - 24.0, DESIGN_H - 204.0),
+            gfx::alpha(Palette::RED, 0.35 + 0.65 * pulse),
+            10.0,
+        );
     }
     // the cards' hexes are live; everything else below is base
-    let blocked: Vec<&Agent> = if ctx.scene.preview { preview_agents(ctx.state) } else { ctx.state.sorted_agents().into_iter().filter(|a| a.status == AgentStatus::Blocked).collect() };
+    let blocked: Vec<&Agent> = if ctx.scene.preview {
+        preview_agents(ctx.state)
+    } else {
+        ctx.state.sorted_agents().into_iter().filter(|a| a.status == AgentStatus::Blocked).collect()
+    };
     let mem = matches!(cause, EmergencyCause::MemoryCritical | EmergencyCause::Both);
     let n_agents = blocked.len().min(if mem { MAX_CARDS - 1 } else { MAX_CARDS });
     let n = n_agents + mem as usize;
@@ -105,7 +116,9 @@ pub fn draw(ctx: &mut Ctx, cause: EmergencyCause) {
 
 /// Preview cards: the oldest working pilot (else the oldest pilot of any status).
 pub fn preview_agents(state: &crate::state::State) -> Vec<&Agent> {
-    let oldest = |s: Option<AgentStatus>| state.herdr.agents.iter().filter(|a| s.is_none_or(|s| a.status == s)).min_by_key(|a| a.since);
+    let oldest = |s: Option<AgentStatus>| {
+        state.herdr.agents.iter().filter(|a| s.is_none_or(|s| a.status == s)).min_by_key(|a| a.since)
+    };
     oldest(Some(AgentStatus::Working)).or_else(|| oldest(None)).into_iter().collect()
 }
 
@@ -122,7 +135,13 @@ fn magi_strip(ctx: &mut Ctx, r: Rect) {
         let up = gfx::text_paint(&ctx.fonts.display(), 32.0, Palette::CYAN).with_letter_spacing(2.0);
         x += gfx::text(c, x, base, v.unit, &up) + 14.0;
         let color = if v.approve { Palette::GREEN } else { Palette::RED };
-        x += gfx::text(c, x, base + 4.0, if v.approve { "承認" } else { "否定" }, &gfx::text_paint(&ctx.fonts.mincho(), 44.0, color)) + 14.0;
+        x += gfx::text(
+            c,
+            x,
+            base + 4.0,
+            if v.approve { "承認" } else { "否定" },
+            &gfx::text_paint(&ctx.fonts.mincho(), 44.0, color),
+        ) + 14.0;
         let rp = gfx::text_paint(&ctx.fonts.mono(), 28.0, gfx::alpha(Palette::WHITE, 0.75));
         x += gfx::text(c, x, base, &v.reason, &rp) + 70.0;
     }
@@ -180,7 +199,13 @@ fn agent_card(ctx: &mut Ctx, r: Rect, a: &Agent, age_label: &str) {
             gfx::text(c, dx, base - seg.font_size() * 0.6 + 44.0, &gfx::ellipsize(c, &cp, &m.cwd, dw), &cp);
         }
         let rp = gfx::text_paint(&fonts.mono(), 28.0, gfx::alpha(Palette::WHITE, 0.6));
-        gfx::text(c, dx, base - seg.font_size() * 0.6 + 88.0, &format!("{} · {} · {}", a.kind.to_uppercase(), a.pane_id, a.rss_bytes.map_or("--".into(), fmt_bytes)), &rp);
+        gfx::text(
+            c,
+            dx,
+            base - seg.font_size() * 0.6 + 88.0,
+            &format!("{} · {} · {}", a.kind.to_uppercase(), a.pane_id, a.rss_bytes.map_or("--".into(), fmt_bytes)),
+            &rp,
+        );
     }
     // context use, when the card has room between the timer row and the jump line
     let cmd_y = r.bottom() - 40.0;
@@ -194,11 +219,21 @@ fn agent_card(ctx: &mut Ctx, r: Rect, a: &Agent, age_label: &str) {
     let label = gfx::text_paint(&fonts.label(), 28.0, gfx::alpha(Palette::GREEN, 0.7)).with_letter_spacing(2.0);
     let lw = gfx::text(c, r.x + 40.0, cmd_y, "JUMP", &label);
     let name = a.name.clone().unwrap_or_else(|| a.pane_id.clone());
-    gfx::text(c, r.x + 60.0 + lw, cmd_y, &gfx::ellipsize(c, &jp, &format!("$ herdr agent focus {name}"), r.w - 120.0 - lw), &jp);
+    gfx::text(
+        c,
+        r.x + 60.0 + lw,
+        cmd_y,
+        &gfx::ellipsize(c, &jp, &format!("$ herdr agent focus {name}"), r.w - 120.0 - lw),
+        &jp,
+    );
 }
 
 /// Label/value rows of a pilot's profile: its type, then what its usage log knows.
-pub fn profile_rows(type_label: String, u: Option<&AgentUsage>, now: std::time::SystemTime) -> Vec<(&'static str, String)> {
+pub fn profile_rows(
+    type_label: String,
+    u: Option<&AgentUsage>,
+    now: std::time::SystemTime,
+) -> Vec<(&'static str, String)> {
     let mut rows = vec![("TYPE", type_label)];
     let Some(u) = u else { return rows };
     let age = |t: std::time::SystemTime| fmt_age(now.duration_since(t).unwrap_or_default());
@@ -254,7 +289,11 @@ fn sync_block(ctx: &mut Ctx, r: Rect, a: &Agent) {
 
 /// Card-local text column (left part of a wide card).
 fn card_main(r: Rect) -> Rect {
-    if r.w > 1800.0 { Rect::new(r.x, r.y, r.w * 0.52, r.h) } else { r }
+    if r.w > 1800.0 {
+        Rect::new(r.x, r.y, r.w * 0.52, r.h)
+    } else {
+        r
+    }
 }
 
 /// Centre and radius of a card's hex.
@@ -270,7 +309,13 @@ fn card_hex(ctx: &mut Ctx, r: Rect, a: &Agent) {
     let c = &mut *ctx.canvas;
     gfx::hex(c, hx, hy, hr, Some(gfx::alpha(Palette::RED, pulse)), Palette::RED);
     let ip = gfx::text_paint(&ctx.fonts.bold(), hr * 0.5, Palette::WHITE).with_text_align(Align::Center);
-    let initials: String = a.display_name().split(['-', '_', ' ']).filter_map(|w| w.chars().next()).take(3).collect::<String>().to_uppercase();
+    let initials: String = a
+        .display_name()
+        .split(['-', '_', ' '])
+        .filter_map(|w| w.chars().next())
+        .take(3)
+        .collect::<String>()
+        .to_uppercase();
     gfx::text(c, hx, hy + hr * 0.18, &initials, &ip);
 }
 
@@ -294,13 +339,20 @@ fn card_side(ctx: &mut Ctx, r: Rect, a: &Agent) {
     for e in mine {
         let (.., h, m, s) = crate::tv::panels::header::local_time(e.at);
         let w = gfx::text(c, r.x, y, &format!("{h:02}:{m:02}:{s:02}  {} →", e.from.label()), &rp);
-        gfx::text(c, r.x + w + 14.0, y, e.to.label(), &gfx::text_paint(&fonts.mono(), 28.0, crate::tv::panels::status_color(e.to)));
+        gfx::text(
+            c,
+            r.x + w + 14.0,
+            y,
+            e.to.label(),
+            &gfx::text_paint(&fonts.mono(), 28.0, crate::tv::panels::status_color(e.to)),
+        );
         y += 38.0;
     }
     y += 24.0;
     gfx::text(c, r.x, y, &format!("SECTOR {}", a.workspace_label.to_uppercase()), &hp);
     y += 44.0;
-    let mates: Vec<&Agent> = st.herdr.agents.iter().filter(|o| o.workspace_label == a.workspace_label && o.pane_id != a.pane_id).collect();
+    let mates: Vec<&Agent> =
+        st.herdr.agents.iter().filter(|o| o.workspace_label == a.workspace_label && o.pane_id != a.pane_id).collect();
     if mates.is_empty() {
         gfx::text(c, r.x, y, "NO OTHER PILOTS", &rp.clone().with_color(Palette::DIM));
         y += 38.0;
@@ -359,7 +411,19 @@ fn memory_card(ctx: &mut Ctx, r: Rect) {
     gfx::text(c, r.x + 60.0 + w, base, "GB AVAILABLE", &up);
     let dp = gfx::text_paint(&fonts.mono(), 30.0, gfx::alpha(Palette::WHITE, 0.8));
     let crit = ctx.config.thresholds.mem_critical_bytes;
-    gfx::text(c, r.x + 40.0, base + 56.0, &format!("CRITICAL < {} · TOTAL {} · SWAP {}/{}", fmt_bytes(crit), fmt_bytes(sys.mem_total), fmt_bytes(sys.swap_used), fmt_bytes(sys.swap_total)), &dp);
+    gfx::text(
+        c,
+        r.x + 40.0,
+        base + 56.0,
+        &format!(
+            "CRITICAL < {} · TOTAL {} · SWAP {}/{}",
+            fmt_bytes(crit),
+            fmt_bytes(sys.mem_total),
+            fmt_bytes(sys.swap_used),
+            fmt_bytes(sys.swap_total)
+        ),
+        &dp,
+    );
     // top 5 by RSS
     let mut procs = ctx.state.procs.clone();
     procs.sort_by(|a, b| b.rss_bytes.cmp(&a.rss_bytes));
@@ -386,7 +450,12 @@ fn others(ctx: &mut Ctx, r: Rect, shown: &[String]) {
     let hp = gfx::text_paint(&fonts.bold(), 40.0, Palette::ORANGE).with_letter_spacing(5.0);
     gfx::text(c, r.x, r.y + 40.0, "OTHER PILOTS", &hp);
     gfx::line(c, r.x, r.y + 60.0, r.right(), r.y + 60.0, gfx::alpha(Palette::ORANGE, 0.5), 2.0);
-    let others: Vec<&Agent> = ctx.state.sorted_agents().into_iter().filter(|a| a.status != AgentStatus::Blocked && !shown.contains(&a.pane_id)).collect();
+    let others: Vec<&Agent> = ctx
+        .state
+        .sorted_agents()
+        .into_iter()
+        .filter(|a| a.status != AgentStatus::Blocked && !shown.contains(&a.pane_id))
+        .collect();
     let cols = 3;
     let col_w = r.w / cols as f32;
     let row_h = 64.0;
@@ -400,7 +469,13 @@ fn others(ctx: &mut Ctx, r: Rect, shown: &[String]) {
         alert::status_icon(c, x, y - 12.0, 26.0, a.status);
         let name = gfx::ellipsize(c, &np, &a.display_name().to_uppercase(), col_w * 0.55);
         gfx::text(c, x + 44.0, y, &name, &np);
-        gfx::text(c, x + 44.0 + col_w * 0.58, y, &format!("{} {}", a.status.label(), fmt_age(ctx.state.age(a))), &sp.clone().with_color(color));
+        gfx::text(
+            c,
+            x + 44.0 + col_w * 0.58,
+            y,
+            &format!("{} {}", a.status.label(), fmt_age(ctx.state.age(a))),
+            &sp.clone().with_color(color),
+        );
     }
     let mut p = Path::new();
     p.rect(r.x, r.bottom(), r.w, 2.0);
@@ -422,7 +497,11 @@ mod tests {
             x.since = t0() + Duration::from_secs(secs);
             x
         };
-        s.herdr.agents = vec![a("young", AgentStatus::Working, 10), a("old", AgentStatus::Working, 5), a("idle", AgentStatus::Idle, 1)];
+        s.herdr.agents = vec![
+            a("young", AgentStatus::Working, 10),
+            a("old", AgentStatus::Working, 5),
+            a("idle", AgentStatus::Idle, 1),
+        ];
         assert_eq!(preview_agents(&s).iter().map(|a| a.pane_id.as_str()).collect::<Vec<_>>(), ["old"]);
         s.herdr.agents = vec![a("done", AgentStatus::Done, 9), a("idle", AgentStatus::Idle, 1)];
         assert_eq!(preview_agents(&s).iter().map(|a| a.pane_id.as_str()).collect::<Vec<_>>(), ["idle"]);
@@ -466,8 +545,19 @@ mod tests {
         for n in 1..=6 {
             let rs = card_rects(area, n);
             assert_eq!(rs.len(), n);
-            for r in &rs { assert!(r.x >= area.x - 0.01 && r.right() <= area.right() + 0.01 && r.y >= area.y - 0.01 && r.bottom() <= area.bottom() + 0.01); }
-            for (i, a) in rs.iter().enumerate() { for b in &rs[i + 1..] { assert!(!a.overlaps(b)); } }
+            for r in &rs {
+                assert!(
+                    r.x >= area.x - 0.01
+                        && r.right() <= area.right() + 0.01
+                        && r.y >= area.y - 0.01
+                        && r.bottom() <= area.bottom() + 0.01
+                );
+            }
+            for (i, a) in rs.iter().enumerate() {
+                for b in &rs[i + 1..] {
+                    assert!(!a.overlaps(b));
+                }
+            }
         }
         assert_eq!(card_rects(area, 4).iter().filter(|r| r.y == area.y).count(), 3);
     }

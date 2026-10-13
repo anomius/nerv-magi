@@ -83,7 +83,11 @@ impl Sampler {
     pub fn new() -> Self {
         // SAFETY: sysconf has no preconditions.
         let (hz, page) = unsafe { (libc::sysconf(libc::_SC_CLK_TCK), libc::sysconf(libc::_SC_PAGESIZE)) };
-        Self::with(Path::new("/proc"), if hz > 0 { hz as f64 } else { 100.0 }, if page > 0 { page as u64 } else { 4096 })
+        Self::with(
+            Path::new("/proc"),
+            if hz > 0 { hz as f64 } else { 100.0 },
+            if page > 0 { page as u64 } else { 4096 },
+        )
     }
 
     pub fn with(root: &Path, hz: f64, page: u64) -> Self {
@@ -108,11 +112,21 @@ impl Sampler {
                 };
                 seen.insert(p.pid, p.ticks);
                 let name = if GENERIC_COMM.contains(&p.name.as_str()) {
-                    display_name(&p.name, &fs::read(self.root.join(p.pid.to_string()).join("cmdline")).unwrap_or_default())
+                    display_name(
+                        &p.name,
+                        &fs::read(self.root.join(p.pid.to_string()).join("cmdline")).unwrap_or_default(),
+                    )
                 } else {
                     p.name
                 };
-                ProcRow { pid: p.pid, name, cpu, rss_bytes: p.rss_pages * self.page, threads: p.threads, state: p.state }
+                ProcRow {
+                    pid: p.pid,
+                    name,
+                    cpu,
+                    rss_bytes: p.rss_pages * self.page,
+                    threads: p.threads,
+                    state: p.state,
+                }
             })
             .collect();
         self.prev = seen;

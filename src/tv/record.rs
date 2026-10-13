@@ -52,10 +52,30 @@ pub fn ffmpeg_args(w: u32, h: u32, fps: u32, out: &Path) -> Vec<String> {
     let size = format!("{w}x{h}");
     let fps = fps.to_string();
     let mut args: Vec<String> = [
-        "-hide_banner", "-loglevel", "error", "-y",
-        "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", &size, "-r", &fps, "-i", "-",
-        "-c:v", "libx264", "-crf", "14", "-preset", "slow", "-pix_fmt", "yuv420p",
-        "-movflags", "+faststart",
+        "-hide_banner",
+        "-loglevel",
+        "error",
+        "-y",
+        "-f",
+        "rawvideo",
+        "-pix_fmt",
+        "rgb24",
+        "-s",
+        &size,
+        "-r",
+        &fps,
+        "-i",
+        "-",
+        "-c:v",
+        "libx264",
+        "-crf",
+        "14",
+        "-preset",
+        "slow",
+        "-pix_fmt",
+        "yuv420p",
+        "-movflags",
+        "+faststart",
     ]
     .iter()
     .map(|s| s.to_string())

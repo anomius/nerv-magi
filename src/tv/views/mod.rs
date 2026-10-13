@@ -42,11 +42,15 @@ pub fn draw(ctx: &mut Ctx, layout: &Layout) {
     if ctx.layer == crate::tv::layers::Layer::Live {
         let recorded = ctx.anim.overlays.clone();
         for (r, color) in recorded {
-            crate::tv::bench::span("live acquiring", || crate::tv::panels::telemetry::acquiring_overlay(ctx.canvas, r, ctx.t, ctx.fonts, color));
+            crate::tv::bench::span("live acquiring", || {
+                crate::tv::panels::telemetry::acquiring_overlay(ctx.canvas, r, ctx.t, ctx.fonts, color)
+            });
         }
     }
     let red = matches!(ctx.scene.scene, Scene::Emergency(_)) && !ctx.scene.preview;
-    crate::tv::bench::span("fx", || crate::tv::fx::draw(ctx.canvas, ctx.fx, layout, ctx.scanlines, ctx.grain, red, &ctx.config.tv, ctx.t));
+    crate::tv::bench::span("fx", || {
+        crate::tv::fx::draw(ctx.canvas, ctx.fx, layout, ctx.scanlines, ctx.grain, red, &ctx.config.tv, ctx.t)
+    });
     wipe(ctx);
     alert::flash(ctx);
     if ctx.help {
@@ -79,7 +83,11 @@ fn help_overlay(ctx: &mut Ctx) {
     let mut y = r.y + plate::PLATE_TOP + 40.0 + 30.0;
     for (i, (k, d)) in rows.iter().enumerate() {
         if i % 2 == 0 {
-            gfx::fill_rect(c, Rect::new(r.x + 40.0, y - 44.0, r.w - 80.0, row_h - 4.0), gfx::alpha(Palette::ORANGE, 0.05));
+            gfx::fill_rect(
+                c,
+                Rect::new(r.x + 40.0, y - 44.0, r.w - 80.0, row_h - 4.0),
+                gfx::alpha(Palette::ORANGE, 0.05),
+            );
         }
         gfx::text(c, x, y, k, &kp);
         gfx::text(c, x + 400.0, y, &d.to_uppercase(), &tp);
@@ -88,7 +96,12 @@ fn help_overlay(ctx: &mut Ctx) {
     y += 16.0;
     gfx::line(c, r.x + 40.0, y - 30.0, r.right() - 40.0, y - 30.0, gfx::alpha(Palette::ORANGE, 0.5), 1.5);
     let sp = gfx::text_paint(&fonts.mono(), 26.0, Palette::GREEN);
-    let state = format!("VIEW {} · SCANLINES {} · GRAIN {}", ctx.scene.mode.label(), ctx.scanlines.label(), if ctx.grain { "ON" } else { "OFF" });
+    let state = format!(
+        "VIEW {} · SCANLINES {} · GRAIN {}",
+        ctx.scene.mode.label(),
+        ctx.scanlines.label(),
+        if ctx.grain { "ON" } else { "OFF" }
+    );
     gfx::text(c, x, y + 10.0, &state, &sp);
     let rp = gfx::text_paint(&fonts.mono(), 24.0, gfx::alpha(Palette::WHITE, 0.55));
     let fit = gfx::ellipsize(c, &rp, &format!("REMOTE  {REMOTE_WORDS}"), r.w - 140.0);
@@ -108,8 +121,9 @@ fn observe_transitions(ctx: &mut Ctx) {
 
 /// Per-core 1 Hz rings, sampled whatever the scene so LOAD has history when it cuts in.
 pub const CORE_KEYS: [&str; 32] = [
-    "core00", "core01", "core02", "core03", "core04", "core05", "core06", "core07", "core08", "core09", "core10", "core11", "core12", "core13", "core14", "core15",
-    "core16", "core17", "core18", "core19", "core20", "core21", "core22", "core23", "core24", "core25", "core26", "core27", "core28", "core29", "core30", "core31",
+    "core00", "core01", "core02", "core03", "core04", "core05", "core06", "core07", "core08", "core09", "core10",
+    "core11", "core12", "core13", "core14", "core15", "core16", "core17", "core18", "core19", "core20", "core21",
+    "core22", "core23", "core24", "core25", "core26", "core27", "core28", "core29", "core30", "core31",
 ];
 
 fn sample_history(ctx: &mut Ctx) {

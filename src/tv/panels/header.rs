@@ -48,7 +48,18 @@ pub fn draw(ctx: &mut Ctx, r: Rect) {
         let (.., h, mi, s) = local_time(ctx.state.now);
         let clock_paint = gfx::text_paint(&ctx.fonts.segment(), 72.0, Palette::GREEN).with_text_align(Align::Right);
         let right = r.right() - 24.0 - SLANT - 20.0;
-        crate::tv::sprites::glow_text(ctx.canvas, ctx.sprites, "clock", right, r.y + 82.0, &format!("{h:02}:{mi:02}:{s:02}"), &clock_paint, Palette::GREEN, gfx::alpha(Palette::GREEN, 0.8), 10.0);
+        crate::tv::sprites::glow_text(
+            ctx.canvas,
+            ctx.sprites,
+            "clock",
+            right,
+            r.y + 82.0,
+            &format!("{h:02}:{mi:02}:{s:02}"),
+            &clock_paint,
+            Palette::GREEN,
+            gfx::alpha(Palette::GREEN, 0.8),
+            10.0,
+        );
     }
 }
 
@@ -101,15 +112,25 @@ fn draw_base(ctx: &mut Ctx, r: Rect) {
     let cells: Vec<(&str, String)> = vec![
         ("HOST", x.map_or_else(dash, |x| x.hostname.clone())),
         ("KERNEL", x.map_or_else(dash, |x| x.kernel.clone())),
-        ("CPU", x.map_or_else(dash, |x| if cores > 0 { format!("{} · {cores}T", x.cpu_model) } else { x.cpu_model.clone() })),
+        (
+            "CPU",
+            x.map_or_else(
+                dash,
+                |x| if cores > 0 { format!("{} · {cores}T", x.cpu_model) } else { x.cpu_model.clone() },
+            ),
+        ),
         ("UPTIME", sys.map_or_else(dash, |s| fmt_uptime(s.uptime_s))),
-        ("LOAD 1/5/15", sys.map_or_else(dash, |s| format!("{:.2} {:.2} {:.2}", s.load_avg[0], s.load_avg[1], s.load_avg[2]))),
+        (
+            "LOAD 1/5/15",
+            sys.map_or_else(dash, |s| format!("{:.2} {:.2} {:.2}", s.load_avg[0], s.load_avg[1], s.load_avg[2])),
+        ),
         ("PROCS RUN/ALL", x.map_or_else(dash, |x| format!("{}/{}", x.procs_running, x.procs_total))),
         ("THREADS", x.map_or_else(dash, |x| x.threads_total.to_string())),
     ];
     let lp = gfx::text_paint(&fonts.label(), 22.0, gfx::alpha(Palette::ORANGE, 0.75)).with_letter_spacing(1.5);
     let vp = gfx::text_paint(&fonts.mono(), 26.0, Palette::WHITE);
-    let widths: Vec<f32> = cells.iter().map(|(l, v)| gfx::text_width(c, l, &lp).max(gfx::text_width(c, v, &vp))).collect();
+    let widths: Vec<f32> =
+        cells.iter().map(|(l, v)| gfx::text_width(c, l, &lp).max(gfx::text_width(c, v, &vp))).collect();
     let avail = strip_end - strip_x;
     let gap = ((avail - widths.iter().sum::<f32>() - 14.0 * cells.len() as f32) / cells.len() as f32).clamp(20.0, 90.0);
     let mut cx = strip_x;

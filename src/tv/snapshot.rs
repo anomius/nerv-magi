@@ -30,10 +30,8 @@ pub(super) struct Headless {
 
 fn headless_on(device: &Device) -> anyhow::Result<Headless> {
     let display = unsafe { Display::with_device(device, None) }.map_err(|e| anyhow!("EGL display: {e}"))?;
-    let template = ConfigTemplateBuilder::new()
-        .with_surface_type(ConfigSurfaceTypes::empty())
-        .with_alpha_size(8)
-        .build();
+    let template =
+        ConfigTemplateBuilder::new().with_surface_type(ConfigSurfaceTypes::empty()).with_alpha_size(8).build();
     let config = unsafe { display.find_configs(template) }
         .map_err(|e| anyhow!("EGL configs: {e}"))?
         .next()
@@ -118,6 +116,11 @@ pub fn render_png(args: &TvArgs, config: Config) -> anyhow::Result<()> {
     enc.set_compression(png::Compression::Fast);
     let rgb: Vec<u8> = img.buf().iter().flat_map(|p| [p.r, p.g, p.b]).collect();
     enc.write_header()?.write_image_data(&rgb)?;
-    eprintln!("nerv: wrote {} ({w}x{h}, {} frames, {drawn} drawn, {:.1} s)", path.display(), frames, start.elapsed().as_secs_f32());
+    eprintln!(
+        "nerv: wrote {} ({w}x{h}, {} frames, {drawn} drawn, {:.1} s)",
+        path.display(),
+        frames,
+        start.elapsed().as_secs_f32()
+    );
     Ok(())
 }

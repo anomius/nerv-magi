@@ -61,7 +61,15 @@ fn bars(ctx: &mut Ctx, r: Rect) {
     let shown = ((area.h / row_h).floor() as usize).min(agents.len());
     for (i, a) in agents.iter().take(shown).enumerate() {
         let u = st.usage_of(a).cloned();
-        sync_row(c, fonts, Rect::new(area.x, area.y + i as f32 * row_h, area.w, row_h - 10.0), a, u.as_ref(), st.age(a), ctx.t);
+        sync_row(
+            c,
+            fonts,
+            Rect::new(area.x, area.y + i as f32 * row_h, area.w, row_h - 10.0),
+            a,
+            u.as_ref(),
+            st.age(a),
+            ctx.t,
+        );
     }
     if agents.len() > shown {
         let p = gfx::text_paint(&fonts.bold(), 28.0, Palette::ORANGE);
@@ -69,7 +77,15 @@ fn bars(ctx: &mut Ctx, r: Rect) {
     }
 }
 
-fn sync_row(c: &mut gfx::Cv, fonts: &crate::tv::fonts::Fonts, r: Rect, a: &Agent, u: Option<&AgentUsage>, age: Duration, t: f32) {
+fn sync_row(
+    c: &mut gfx::Cv,
+    fonts: &crate::tv::fonts::Fonts,
+    r: Rect,
+    a: &Agent,
+    u: Option<&AgentUsage>,
+    age: Duration,
+    t: f32,
+) {
     // type plate: kind / model / effort · mode
     let tp = Rect::new(r.x, r.y, 400.0, r.h);
     let outline = plate::chamfer_path(tp, plate::Cuts::TL_BR, 18.0);
@@ -79,7 +95,13 @@ fn sync_row(c: &mut gfx::Cv, fonts: &crate::tv::fonts::Fonts, r: Rect, a: &Agent
     let effort = u.and_then(|u| u.effort.clone()).unwrap_or_default().to_uppercase();
     let mode = u.and_then(|u| u.mode.clone()).unwrap_or_default().to_uppercase();
     let line_h = (r.h / 3.6).min(42.0);
-    gfx::text(c, tp.x + 20.0, tp.y + line_h, &a.kind.to_uppercase(), &gfx::text_paint(&fonts.bold(), 26.0, Palette::CYAN).with_letter_spacing(3.0));
+    gfx::text(
+        c,
+        tp.x + 20.0,
+        tp.y + line_h,
+        &a.kind.to_uppercase(),
+        &gfx::text_paint(&fonts.bold(), 26.0, Palette::CYAN).with_letter_spacing(3.0),
+    );
     let mp = gfx::text_paint(&fonts.display(), 34.0, Palette::WHITE);
     gfx::text(c, tp.x + 20.0, tp.y + line_h * 2.1, &gfx::ellipsize(c, &mp, &model, tp.w - 40.0), &mp);
     let ep = gfx::text_paint(&fonts.label(), 24.0, gfx::alpha(Palette::ORANGE, 0.9)).with_letter_spacing(1.5);
@@ -155,7 +177,12 @@ fn sync_row(c: &mut gfx::Cv, fonts: &crate::tv::fonts::Fonts, r: Rect, a: &Agent
     if let Some(u) = u {
         let cp = gfx::text_paint(&fonts.mono(), 22.0, gfx::alpha(Palette::WHITE, 0.7));
         let est = if u.context_window_estimated { "~" } else { "" };
-        let ctx_line = format!("CTX {}{} / {}", est, u.context_used.map_or("--".into(), fmt_tokens), u.context_window.map_or("--".into(), fmt_tokens));
+        let ctx_line = format!(
+            "CTX {}{} / {}",
+            est,
+            u.context_used.map_or("--".into(), fmt_tokens),
+            u.context_window.map_or("--".into(), fmt_tokens)
+        );
         gfx::text(c, rx, (base + 32.0).min(r.bottom() - 4.0), &ctx_line, &cp);
     }
     gfx::line(c, r.x, r.bottom() + 5.0, r.right(), r.bottom() + 5.0, gfx::alpha(Palette::ORANGE, 0.15), 1.0);
@@ -170,7 +197,12 @@ fn fleet(ctx: &mut Ctx, r: Rect) {
     let cache: u64 = all.iter().map(|u| u.cache_read_tokens).sum();
     let reasoning: u64 = all.iter().map(|u| u.reasoning_tokens).sum();
     let costs: Vec<f64> = all.iter().filter_map(|u| u.cost_usd).collect();
-    let rows: [(&str, &str, u64); 4] = [("TOTAL TOKENS", "tot", total), ("OUTPUT", "out", output), ("CACHE READ", "cache", cache), ("REASONING", "reason", reasoning)];
+    let rows: [(&str, &str, u64); 4] = [
+        ("TOTAL TOKENS", "tot", total),
+        ("OUTPUT", "out", output),
+        ("CACHE READ", "cache", cache),
+        ("REASONING", "reason", reasoning),
+    ];
     let mut values = Vec::new();
     for (label, key, v) in rows {
         values.push((label, ctx.anim.roll_u64(&format!("fleet_{key}"), v, ctx.t)));
@@ -192,7 +224,11 @@ fn fleet(ctx: &mut Ctx, r: Rect) {
         y = base + 46.0;
     }
     let cost_p = gfx::text_paint(&fonts.mono(), 32.0, Palette::WHITE);
-    let cost = if costs.is_empty() { "COST --  (needs the statusline hook)".to_string() } else { format!("COST ${:.2}  ({} of {} sessions)", costs.iter().sum::<f64>(), costs.len(), all.len()) };
+    let cost = if costs.is_empty() {
+        "COST --  (needs the statusline hook)".to_string()
+    } else {
+        format!("COST ${:.2}  ({} of {} sessions)", costs.iter().sum::<f64>(), costs.len(), all.len())
+    };
     gfx::text(c, r.x + 40.0, r.bottom() - 30.0, &gfx::ellipsize(c, &cost_p, &cost, r.w - 80.0), &cost_p);
 }
 
@@ -202,7 +238,9 @@ fn limits(ctx: &mut Ctx, r: Rect) {
     let gauges: Vec<(String, Option<String>, Option<String>, LimitWindow)> = st
         .limits
         .iter()
-        .flat_map(|l| l.windows.iter().map(move |w| (l.provider.to_uppercase(), l.plan.clone(), l.credits.clone(), w.clone())))
+        .flat_map(|l| {
+            l.windows.iter().map(move |w| (l.provider.to_uppercase(), l.plan.clone(), l.credits.clone(), w.clone()))
+        })
         .collect();
     let c = &mut *ctx.canvas;
     let fonts = ctx.fonts;
@@ -228,20 +266,42 @@ fn limits(ctx: &mut Ctx, r: Rect) {
         }
         gfx::text(c, g.x, g.y + 34.0, &head, &hp);
         let seg = gfx::text_paint(&fonts.segment(), 72.0, color).with_text_align(Align::Right);
-        gfx::glow_text(c, g.right() - 46.0, g.y + 80.0, &format!("{:.0}", w.used_pct), &seg, gfx::alpha(color, 0.6), 8.0);
-        gfx::text(c, g.right(), g.y + 80.0, "%", &gfx::text_paint(&fonts.display(), 32.0, color).with_text_align(Align::Right));
+        gfx::glow_text(
+            c,
+            g.right() - 46.0,
+            g.y + 80.0,
+            &format!("{:.0}", w.used_pct),
+            &seg,
+            gfx::alpha(color, 0.6),
+            8.0,
+        );
+        gfx::text(
+            c,
+            g.right(),
+            g.y + 80.0,
+            "%",
+            &gfx::text_paint(&fonts.display(), 32.0, color).with_text_align(Align::Right),
+        );
         let bar = Rect::new(g.x, g.y + 52.0, g.w - 260.0, 30.0);
         gfx::seg_bar(c, bar, w.used_pct / 100.0, 40, color, gfx::alpha(Palette::DIM, 0.3));
         for mark in [0.8, 0.95] {
             let mx = bar.x + bar.w * mark;
             gfx::line(c, mx, bar.y - 6.0, mx, bar.bottom() + 6.0, gfx::alpha(Palette::WHITE, 0.6), 2.0);
         }
-        let reset = w.resets_at.map_or("RESET --".to_string(), |at| format!("RESET IN {}", usage::fmt_reset(at.duration_since(st.now).unwrap_or_default())));
+        let reset = w.resets_at.map_or("RESET --".to_string(), |at| {
+            format!("RESET IN {}", usage::fmt_reset(at.duration_since(st.now).unwrap_or_default()))
+        });
         let mut info = reset;
         if let Some(cr) = credits {
             info.push_str(&format!(" · CREDITS {cr}"));
         }
-        gfx::text(c, g.x, bar.bottom() + 36.0, &info, &gfx::text_paint(&fonts.mono(), 26.0, gfx::alpha(Palette::WHITE, 0.8)));
+        gfx::text(
+            c,
+            g.x,
+            bar.bottom() + 36.0,
+            &info,
+            &gfx::text_paint(&fonts.mono(), 26.0, gfx::alpha(Palette::WHITE, 0.8)),
+        );
         let (word, fill) = match tg {
             Tag::Ok => ("NOMINAL", None),
             Tag::Caution => ("CAUTION", Some(Palette::AMBER)),
@@ -252,7 +312,17 @@ fn limits(ctx: &mut Ctx, r: Rect) {
             Some(f) => gfx::fill_rect(c, tr, f),
             None => gfx::stroke_rect(c, tr, gfx::alpha(Palette::GREEN, 0.7), 2.0),
         }
-        gfx::text_center(c, tr, word, &gfx::text_paint(&fonts.bold(), 26.0, if fill.is_some() { Palette::BLACK } else { gfx::alpha(Palette::GREEN, 0.8) }).with_letter_spacing(3.0));
+        gfx::text_center(
+            c,
+            tr,
+            word,
+            &gfx::text_paint(
+                &fonts.bold(),
+                26.0,
+                if fill.is_some() { Palette::BLACK } else { gfx::alpha(Palette::GREEN, 0.8) },
+            )
+            .with_letter_spacing(3.0),
+        );
     }
 }
 

@@ -12,7 +12,8 @@ use ratatui::Frame;
 
 use crate::config::{Config, Thresholds};
 use crate::state::{
-    fmt_age, fmt_bytes, fmt_rate, model_short, Agent, AgentStatus, AlertLevel, EmergencyCause, HerdrLink, PlayStatus, State,
+    fmt_age, fmt_bytes, fmt_rate, model_short, Agent, AgentStatus, AlertLevel, EmergencyCause, HerdrLink, PlayStatus,
+    State,
 };
 
 pub const BLACK: Color = Color::Rgb(0x00, 0x00, 0x00);
@@ -176,7 +177,13 @@ fn type_compact(s: &State, a: &Agent) -> String {
 fn ctx_text(s: &State, a: &Agent) -> (String, Color) {
     let Some(u) = s.usage_of(a) else { return (String::new(), DIM) };
     let Some(pct) = u.context_pct() else { return (String::new(), DIM) };
-    let color = if pct > 80.0 { RED } else if pct >= 50.0 { AMBER } else { GREEN };
+    let color = if pct > 80.0 {
+        RED
+    } else if pct >= 50.0 {
+        AMBER
+    } else {
+        GREEN
+    };
     (format!("ctx{}{pct:.0}%", if u.context_window_estimated { "~" } else { " " }), color)
 }
 
@@ -184,7 +191,13 @@ fn ctx_text(s: &State, a: &Agent) -> (String, Color) {
 fn tokens_text(s: &State, a: &Agent) -> String {
     s.usage_of(a)
         .filter(|u| u.total_tokens() > 0)
-        .map(|u| format!("↑{} ↓{}", count_short(u.input_tokens + u.cache_read_tokens + u.cache_write_tokens), count_short(u.output_tokens)))
+        .map(|u| {
+            format!(
+                "↑{} ↓{}",
+                count_short(u.input_tokens + u.cache_read_tokens + u.cache_write_tokens),
+                count_short(u.output_tokens)
+            )
+        })
         .unwrap_or_default()
 }
 
@@ -202,12 +215,17 @@ fn load_color(v: f32) -> Color {
 /// TV uses too; the MAGI tally alone only colours the normal header.
 pub fn emergency_text(s: &State, t: &Thresholds) -> Option<String> {
     let blocked = || {
-        let names: Vec<String> =
-            s.sorted_agents().into_iter().filter(|a| a.status == AgentStatus::Blocked).map(Agent::display_name).collect();
+        let names: Vec<String> = s
+            .sorted_agents()
+            .into_iter()
+            .filter(|a| a.status == AgentStatus::Blocked)
+            .map(Agent::display_name)
+            .collect();
         let more = if names.len() > 1 { format!(" +{}", names.len() - 1) } else { String::new() };
         format!("{} BLOCKED{more}", names.first().map_or("", String::as_str))
     };
-    let memory = || format!("MEMORY CRITICAL · FREE {:.1}G", s.sys.as_ref().map_or(0, |y| y.mem_available) as f64 / 1e9);
+    let memory =
+        || format!("MEMORY CRITICAL · FREE {:.1}G", s.sys.as_ref().map_or(0, |y| y.mem_available) as f64 / 1e9);
     Some(match s.emergency(t)? {
         EmergencyCause::Blocked => blocked(),
         EmergencyCause::MemoryCritical => memory(),
@@ -259,12 +277,22 @@ fn header(s: &State, cfg: &Config, w: usize) -> Line<'static> {
         let tally = |short: bool| {
             let unit = |u: &'static str| {
                 let n = u.split('·').next().unwrap_or(u);
-                if short { &n[..3] } else { n }
+                if short {
+                    &n[..3]
+                } else {
+                    n
+                }
             };
-            votes.iter().map(|v| format!("{} {}", unit(v.unit), if v.approve { "承認" } else { "否定" })).collect::<Vec<_>>().join(" ")
+            votes
+                .iter()
+                .map(|v| format!("{} {}", unit(v.unit), if v.approve { "承認" } else { "否定" }))
+                .collect::<Vec<_>>()
+                .join(" ")
         };
         let clock = format!("{} ", hms(s.now));
-        let spread = |l: String, r: &str| (width(&l) + 1 + width(r) <= w).then(|| format!("{l}{}{r}", " ".repeat(w - width(&l) - width(r))));
+        let spread = |l: String, r: &str| {
+            (width(&l) + 1 + width(r) <= w).then(|| format!("{l}{}{r}", " ".repeat(w - width(&l) - width(r))))
+        };
         let with = |short| format!("{left} · {}", tally(short));
         let text = spread(with(false), &clock)
             .or_else(|| (width(&with(false)) <= w).then(|| pad(&with(false), w)))
@@ -397,8 +425,12 @@ fn agent_lines(s: &State, budget: usize, w: usize) -> Vec<Line<'static>> {
         return vec![clip(vec![sp("NO PILOTS DETECTED", DIM)], w)];
     }
     let plan = plan_rows(busy.len(), idle.len(), budget);
-    let rows: Vec<&Agent> =
-        busy.iter().take(plan.shown).chain(idle.iter().take(if plan.idle_rows { idle.len() } else { 0 })).copied().collect();
+    let rows: Vec<&Agent> = busy
+        .iter()
+        .take(plan.shown)
+        .chain(idle.iter().take(if plan.idle_rows { idle.len() } else { 0 }))
+        .copied()
+        .collect();
     let widest = |f: &dyn Fn(&Agent) -> String| rows.iter().map(|a| width(&f(a))).max().unwrap_or(0);
     let cols = agent_cols(
         w,
@@ -516,7 +548,13 @@ fn limits_line(s: &State, w: usize) -> Option<Line<'static>> {
         v.push(sp(l.provider.to_uppercase(), ORANGE));
         for (j, win) in l.windows.iter().enumerate() {
             v.push(sp(format!("{}{} ", if j == 0 { " " } else { " · " }, win.label), WHITE));
-            let c = if win.used_pct >= 95.0 { RED } else if win.used_pct >= 80.0 { AMBER } else { GREEN };
+            let c = if win.used_pct >= 95.0 {
+                RED
+            } else if win.used_pct >= 80.0 {
+                AMBER
+            } else {
+                GREEN
+            };
             v.push(sp(format!("{:.0}%", win.used_pct), c));
             if let Some(r) = win.resets_at.and_then(|at| reset_short(s.now, at)) {
                 v.push(sp(format!(" ⟳{r}"), DIM));
@@ -593,7 +631,8 @@ fn ticker_lines(s: &State, w: usize) -> Vec<Line<'static>> {
     let mut used = 3;
     for e in &s.ticker {
         let (_, color) = status_style(e.to);
-        let item = vec![sp(format!("{} ", hm(e.at)), DIM), sp(format!("{} → ", e.agent), WHITE), sp(e.to.label(), color)];
+        let item =
+            vec![sp(format!("{} ", hm(e.at)), DIM), sp(format!("{} → ", e.agent), WHITE), sp(e.to.label(), color)];
         let iw: usize = item.iter().map(Span::width).sum::<usize>() + 3;
         if used > 3 && used + iw > w {
             lines.push(clip(std::mem::replace(&mut cur, vec![sp("   ", ORANGE)]), w));
@@ -645,12 +684,17 @@ pub fn render(frame: &mut Frame, state: &State, config: &Config) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::state::{tests::{agent, t0}, *};
+    use crate::state::{
+        tests::{agent, t0},
+        *,
+    };
     use ratatui::{backend::TestBackend, style::Color, Terminal};
 
     fn text(term: &Terminal<TestBackend>) -> String {
         let buf = term.backend().buffer();
-        (0..buf.area.height).map(|y| (0..buf.area.width).map(|x| buf[(x, y)].symbol().to_string()).collect::<String>() + "\n").collect()
+        (0..buf.area.height)
+            .map(|y| (0..buf.area.width).map(|x| buf[(x, y)].symbol().to_string()).collect::<String>() + "\n")
+            .collect()
     }
 
     fn draw(s: &State, w: u16, h: u16) -> Terminal<TestBackend> {
@@ -683,11 +727,15 @@ mod tests {
 
     #[test]
     fn shows_blocked_first_and_standby_row() {
-        let out = render_with(vec![
-            agent("w1:p1", "idle-a", AgentStatus::Idle, "w1"),
-            agent("w1:p2", "blocked-b", AgentStatus::Blocked, "w1"),
-            agent("w1:p3", "working-c", AgentStatus::Working, "w1"),
-        ], 80, 20);
+        let out = render_with(
+            vec![
+                agent("w1:p1", "idle-a", AgentStatus::Idle, "w1"),
+                agent("w1:p2", "blocked-b", AgentStatus::Blocked, "w1"),
+                agent("w1:p3", "working-c", AgentStatus::Working, "w1"),
+            ],
+            80,
+            20,
+        );
         let b = out.find("blocked-b").unwrap();
         let w = out.find("working-c").unwrap();
         assert!(b < w);
@@ -697,7 +745,16 @@ mod tests {
 
     #[test]
     fn many_agents_and_long_names_fit() {
-        let agents = (0..25).map(|i| agent(&format!("w1:p{i}"), &format!("agent-with-a-very-long-name-number-{i}"), AgentStatus::Working, "w1")).collect();
+        let agents = (0..25)
+            .map(|i| {
+                agent(
+                    &format!("w1:p{i}"),
+                    &format!("agent-with-a-very-long-name-number-{i}"),
+                    AgentStatus::Working,
+                    "w1",
+                )
+            })
+            .collect();
         let out = render_with(agents, 60, 20);
         assert_eq!(out.lines().count(), 20);
         assert!(out.lines().all(|l| l.chars().count() <= 60));
@@ -802,7 +859,13 @@ mod tests {
             ]),
             t0(),
         );
-        s.apply(Update::AgentMeta(vec![("w1:p1".into(), AgentMeta { cwd: "~/x".into(), branch: Some("feat/search".into()), session_id: None })]), t0());
+        s.apply(
+            Update::AgentMeta(vec![(
+                "w1:p1".into(),
+                AgentMeta { cwd: "~/x".into(), branch: Some("feat/search".into()), session_id: None },
+            )]),
+            t0(),
+        );
         let out = text(&draw(&s, 100, 20));
         assert!(out.contains("JOBS") && out.contains("api-server") && out.contains("uv run uvicorn"), "{out}");
         assert!(out.contains("TOP") && out.contains("node 126%"), "{out}");
@@ -814,7 +877,13 @@ mod tests {
     #[test]
     fn wide_panes_keep_columns_tight_to_their_content() {
         let mut s = linked(vec![agent("w1:p1", "be-search-port", AgentStatus::Working, "search")]);
-        s.apply(Update::AgentMeta(vec![("w1:p1".into(), AgentMeta { cwd: "~".into(), branch: Some("main".into()), session_id: None })]), t0());
+        s.apply(
+            Update::AgentMeta(vec![(
+                "w1:p1".into(),
+                AgentMeta { cwd: "~".into(), branch: Some("main".into()), session_id: None },
+            )]),
+            t0(),
+        );
         let out = text(&draw(&s, 200, 10));
         assert!(out.contains("● be-search-port claude search ⎇ main ACTIVE"), "{out}");
     }
@@ -863,7 +932,11 @@ mod tests {
         };
         s.apply(
             Update::PlanLimits(vec![
-                PlanLimits { provider: "claude".into(), windows: vec![window("5H", 37.0, 3600), window("7D", 12.0, 5 * 86400)], ..Default::default() },
+                PlanLimits {
+                    provider: "claude".into(),
+                    windows: vec![window("5H", 37.0, 3600), window("7D", 12.0, 5 * 86400)],
+                    ..Default::default()
+                },
                 PlanLimits {
                     provider: "codex".into(),
                     plan: Some("pro".into()),
@@ -905,10 +978,19 @@ mod tests {
 
     #[test]
     fn compact_counts_and_effort() {
-        for (n, want) in [(512, "512"), (48_000, "48K"), (1_200_000, "1.2M"), (343_124, "343K"), (119_189_808, "119M"), (2_500_000_000, "2.5B")] {
+        for (n, want) in [
+            (512, "512"),
+            (48_000, "48K"),
+            (1_200_000, "1.2M"),
+            (343_124, "343K"),
+            (119_189_808, "119M"),
+            (2_500_000_000, "2.5B"),
+        ] {
             assert_eq!(count_short(n), want);
         }
-        for (e, want) in [("xhigh", "XH"), ("high", "H"), ("medium", "M"), ("low", "L"), ("minimal", "MIN"), ("max", "MAX")] {
+        for (e, want) in
+            [("xhigh", "XH"), ("high", "H"), ("medium", "M"), ("low", "L"), ("minimal", "MIN"), ("max", "MAX")]
+        {
             assert_eq!(effort_short(e), want);
         }
     }

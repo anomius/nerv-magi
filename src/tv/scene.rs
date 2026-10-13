@@ -190,7 +190,9 @@ impl Director {
             if self.restart_rotation || !self.current.rotating() {
                 // leaving BOOT, EMERGENCY or a pin: a fresh MAIN slot, timed from when the view ended
                 self.rot_start = match self.current {
-                    Scene::Boot { reconnecting: false } if !self.restart_rotation => (self.started + tv.boot_secs as f32).min(t),
+                    Scene::Boot { reconnecting: false } if !self.restart_rotation => {
+                        (self.started + tv.boot_secs as f32).min(t)
+                    }
                     _ => t,
                 };
                 self.restart_rotation = false;
@@ -262,7 +264,10 @@ mod tests {
         s.apply(Update::HerdrLink(HerdrLink::Linked), t0());
         let status = if blocked { AgentStatus::Blocked } else { AgentStatus::Working };
         s.apply(Update::HerdrSnapshot { agents: vec![agent("w1:p1", "a", status, "w1")], workspaces: vec![] }, t0());
-        s.apply(Update::Sys(SysState { mem_total: 15_000_000_000, mem_available: 4_000_000_000, ..Default::default() }), t0());
+        s.apply(
+            Update::Sys(SysState { mem_total: 15_000_000_000, mem_available: 4_000_000_000, ..Default::default() }),
+            t0(),
+        );
         s
     }
 
@@ -460,5 +465,4 @@ mod tests {
         assert_eq!(Scene::Emergency(EmergencyCause::Both).view_name(), ViewName::Emergency);
         assert_eq!(Scene::Boot { reconnecting: true }.view_name(), ViewName::Main);
     }
-
 }

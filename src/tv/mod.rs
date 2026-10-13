@@ -4,8 +4,8 @@ pub mod anim;
 pub mod bench;
 pub mod fonts;
 pub mod fx;
-pub mod input;
 pub mod gfx;
+pub mod input;
 pub mod layers;
 pub mod layout;
 pub mod panels;
@@ -47,13 +47,11 @@ use crate::state::{drain_into, PlayStatus, State, Update};
 
 use self::anim::Anim;
 use self::fonts::Fonts;
-use self::layers::Layer;
 use self::gfx::{Cv, Palette};
+use self::layers::Layer;
 use self::layout::Layout;
 use self::panels::{Ctx, SceneInfo};
 use self::scene::{Director, Scene};
-
-
 
 /// Everything a frame needs, independent of where it is presented (window or offscreen image).
 pub struct View {
@@ -196,13 +194,24 @@ impl View {
                     self.canvas.delete_image(old.image);
                 }
                 match self.canvas.create_image_empty(w as usize, h as usize, PixelFormat::Rgba8, ImageFlags::FLIP_Y) {
-                    Ok(image) => self.base = Some(BaseImage { image, size: (w, h), at: f32::NEG_INFINITY, scene, dirty: true, epoch: None }),
+                    Ok(image) => {
+                        self.base = Some(BaseImage {
+                            image,
+                            size: (w, h),
+                            at: f32::NEG_INFINITY,
+                            scene,
+                            dirty: true,
+                            epoch: None,
+                        })
+                    }
                     Err(e) => eprintln!("nerv: base layer image {w}x{h}: {e:?}"),
                 }
             }
         }
         let epoch = layers::epoch(&self.state, info.preview);
-        match self.base.as_ref().filter(|_| layered).map(|b| (b.image, layers::base_stale(t - b.at, b.scene != scene, false, b.dirty || b.epoch != Some(epoch)))) {
+        match self.base.as_ref().filter(|_| layered).map(|b| {
+            (b.image, layers::base_stale(t - b.at, b.scene != scene, false, b.dirty || b.epoch != Some(epoch)))
+        }) {
             Some((image, stale)) => {
                 if stale {
                     self.canvas.set_render_target(RenderTarget::Image(image));
@@ -286,7 +295,9 @@ impl View {
     /// Fast motion that needs full frame rate: cuts, the blocked flash, MAGI flicker and trace
     /// pulses, the BOOT view.
     fn fast(&self) -> bool {
-        matches!(self.director.current(), Scene::Boot { .. }) || self.director.transition(self.t) < 1.0 || self.anim.busy(self.t)
+        matches!(self.director.current(), Scene::Boot { .. })
+            || self.director.transition(self.t) < 1.0
+            || self.anim.busy(self.t)
     }
 
     /// Ambient motion: anything not MAIN, a blocked agent, music, the toast, rolling scanlines.
@@ -470,7 +481,10 @@ const WINDOWED_SIZE: winit::dpi::LogicalSize<f64> = winit::dpi::LogicalSize::new
 /// still fullscreen and un-fullscreens to the creation size, else its 800×600 default when
 /// floating), fullscreen on top when starting fullscreen.
 fn window_attributes(start_fullscreen: bool) -> winit::window::WindowAttributes {
-    let attrs = Window::default_attributes().with_title("NERV · MAGI").with_name("nerv-tv", "nerv-tv").with_inner_size(WINDOWED_SIZE);
+    let attrs = Window::default_attributes()
+        .with_title("NERV · MAGI")
+        .with_name("nerv-tv", "nerv-tv")
+        .with_inner_size(WINDOWED_SIZE);
     if start_fullscreen {
         attrs.with_fullscreen(Some(Fullscreen::Borderless(None)))
     } else {
@@ -538,7 +552,11 @@ fn pick_config(configs: Box<dyn Iterator<Item = GlutinConfig> + '_>) -> GlutinCo
     configs
         .reduce(|best, c| {
             let better = c.stencil_size() >= 8 && (best.stencil_size() < 8 || c.num_samples() < best.num_samples());
-            if better { c } else { best }
+            if better {
+                c
+            } else {
+                best
+            }
         })
         .expect("no GL config")
 }
@@ -565,7 +583,11 @@ impl ApplicationHandler for App {
             WindowEvent::Focused(true) => self.keys.focused(self.start.elapsed().as_secs_f32()),
             // synthetic presses (X11: keys already held at focus) are never meant for us; on Wayland
             // stray typing arrives as real presses, which the focus grace period drops
-            WindowEvent::KeyboardInput { event: KeyEvent { logical_key, state: ElementState::Pressed, repeat, .. }, is_synthetic: false, .. } => {
+            WindowEvent::KeyboardInput {
+                event: KeyEvent { logical_key, state: ElementState::Pressed, repeat, .. },
+                is_synthetic: false,
+                ..
+            } => {
                 if !self.keys.allows(self.start.elapsed().as_secs_f32()) {
                     return;
                 }
@@ -583,7 +605,12 @@ impl ApplicationHandler for App {
             }
             WindowEvent::RedrawRequested => {
                 let size = gl.window.inner_size();
-                gl.view.frame(size.width.max(1), size.height.max(1), self.start.elapsed().as_secs_f32(), RenderTarget::Screen);
+                gl.view.frame(
+                    size.width.max(1),
+                    size.height.max(1),
+                    self.start.elapsed().as_secs_f32(),
+                    RenderTarget::Screen,
+                );
                 if let Err(e) = gl.surface.swap_buffers(&gl.context) {
                     self.fail(el, anyhow!("swap buffers: {e}"));
                 }
@@ -608,7 +635,11 @@ impl ApplicationHandler for App {
             gl.window.request_redraw();
         }
         let tv = &gl.view.config.tv;
-        let want = tv.cursor.visible(gl.window.fullscreen().is_some(), self.last_move.elapsed().as_secs_f32(), tv.cursor_hide_secs);
+        let want = tv.cursor.visible(
+            gl.window.fullscreen().is_some(),
+            self.last_move.elapsed().as_secs_f32(),
+            tv.cursor_hide_secs,
+        );
         if let Some(v) = self.cursor.update(want) {
             gl.window.set_cursor_visible(v);
         }
@@ -630,7 +661,11 @@ mod tests {
         use winit::dpi::Size;
         for fs in [true, false] {
             let a = window_attributes(fs);
-            assert_eq!(a.inner_size, Some(Size::Logical(WINDOWED_SIZE)), "fullscreen start {fs}: un-fullscreen needs a size to come back to");
+            assert_eq!(
+                a.inner_size,
+                Some(Size::Logical(WINDOWED_SIZE)),
+                "fullscreen start {fs}: un-fullscreen needs a size to come back to"
+            );
             assert_eq!(a.fullscreen.is_some(), fs);
         }
     }

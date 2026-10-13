@@ -139,7 +139,9 @@ impl Images {
         }
         let h = p.period_px as usize;
         let a = (p.alpha * 255.0).round() as u8;
-        let px: Vec<RGBA8> = (0..h).map(|y| if (y as f32) < p.line_px { RGBA8::new(0, 0, 0, a) } else { RGBA8::new(0, 0, 0, 0) }).collect();
+        let px: Vec<RGBA8> = (0..h)
+            .map(|y| if (y as f32) < p.line_px { RGBA8::new(0, 0, 0, a) } else { RGBA8::new(0, 0, 0, 0) })
+            .collect();
         let id = c.create_image(ImageSource::Rgba(Img::new(px.as_slice(), 1, h)), pattern_flags()).ok()?;
         self.scan = Some((p, id));
         Some(id)
@@ -191,7 +193,16 @@ fn pattern_flags() -> ImageFlags {
 /// Draw the post effects over the finished view, in device pixels (so lines stay crisp). `grain`
 /// is the runtime switch; `red` tints the grain (EMERGENCY).
 #[allow(clippy::too_many_arguments)]
-pub fn draw(c: &mut Cv, images: &mut Images, layout: &Layout, mode: ScanlineMode, grain: bool, red: bool, tv: &TvConfig, t: f32) {
+pub fn draw(
+    c: &mut Cv,
+    images: &mut Images,
+    layout: &Layout,
+    mode: ScanlineMode,
+    grain: bool,
+    red: bool,
+    tv: &TvConfig,
+    t: f32,
+) {
     let screen = layout.to_px(Rect::new(0.0, 0.0, DESIGN_W, DESIGN_H));
     c.save();
     c.reset_transform();
@@ -215,7 +226,11 @@ pub fn draw(c: &mut Cv, images: &mut Images, layout: &Layout, mode: ScanlineMode
                 top,
                 0.0,
                 top + h,
-                [(0.0, gfx::alpha(Palette::WHITE, 0.0)), (0.5, gfx::alpha(Palette::WHITE, 0.04)), (1.0, gfx::alpha(Palette::WHITE, 0.0))],
+                [
+                    (0.0, gfx::alpha(Palette::WHITE, 0.0)),
+                    (0.5, gfx::alpha(Palette::WHITE, 0.04)),
+                    (1.0, gfx::alpha(Palette::WHITE, 0.0)),
+                ],
             );
             let mut band = Path::new();
             band.rect(screen.x, top.max(screen.y), screen.w, (top + h).min(screen.bottom()) - top.max(screen.y));
@@ -242,7 +257,14 @@ pub fn draw(c: &mut Cv, images: &mut Images, layout: &Layout, mode: ScanlineMode
     if tv.vignette {
         let (cx, cy) = (screen.x + screen.w / 2.0, screen.y + screen.h / 2.0);
         let outer = (screen.w * screen.w + screen.h * screen.h).sqrt() / 2.0;
-        let paint = Paint::radial_gradient(cx, cy, outer * 0.55, outer, gfx::alpha(Palette::BLACK, 0.0), gfx::alpha(Palette::BLACK, 0.35));
+        let paint = Paint::radial_gradient(
+            cx,
+            cy,
+            outer * 0.55,
+            outer,
+            gfx::alpha(Palette::BLACK, 0.0),
+            gfx::alpha(Palette::BLACK, 0.35),
+        );
         c.fill_path(&all, &paint);
     }
     c.restore();
@@ -277,8 +299,12 @@ mod tests {
 
     #[test]
     fn cycling_from_the_effective_mode_and_toast() {
-        let order: Vec<ScanlineMode> = std::iter::successors(Some(ScanlineMode::Off), |m| Some(m.next())).take(5).collect();
-        assert_eq!(order, [ScanlineMode::Off, ScanlineMode::Subtle, ScanlineMode::Heavy, ScanlineMode::Crt, ScanlineMode::Off]);
+        let order: Vec<ScanlineMode> =
+            std::iter::successors(Some(ScanlineMode::Off), |m| Some(m.next())).take(5).collect();
+        assert_eq!(
+            order,
+            [ScanlineMode::Off, ScanlineMode::Subtle, ScanlineMode::Heavy, ScanlineMode::Crt, ScanlineMode::Off]
+        );
         assert_eq!(toast_text(ScanlineMode::Heavy), "SCANLINES · HEAVY");
         assert_eq!(toast_text(ScanlineMode::Off), "SCANLINES · OFF");
     }
@@ -323,7 +349,11 @@ mod tests {
         for strength in [0.1, 0.35, 1.0] {
             let cap = (strength * 0.08 * 255.0f32).round() as u8;
             let tile = grain_tile(3, 128, strength);
-            assert!(tile.iter().all(|p| p.a <= cap), "strength {strength}: max {}", tile.iter().map(|p| p.a).max().unwrap());
+            assert!(
+                tile.iter().all(|p| p.a <= cap),
+                "strength {strength}: max {}",
+                tile.iter().map(|p| p.a).max().unwrap()
+            );
             assert!(tile.iter().any(|p| p.a == cap || p.a + 1 >= cap), "noise reaches its peak");
             // biased toward 0: most pixels are under a third of the peak
             let low = tile.iter().filter(|p| (p.a as f32) < cap as f32 / 3.0).count();

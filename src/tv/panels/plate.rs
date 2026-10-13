@@ -110,7 +110,8 @@ pub fn trace(canvas: &mut Cv, pts: &[(f32, f32)], color: Color, pulse: Option<f3
 
 /// The point at fraction `f` of a polyline's length.
 pub fn point_along(pts: &[(f32, f32)], f: f32) -> (f32, f32) {
-    let segs: Vec<f32> = pts.windows(2).map(|w| ((w[1].0 - w[0].0).powi(2) + (w[1].1 - w[0].1).powi(2)).sqrt()).collect();
+    let segs: Vec<f32> =
+        pts.windows(2).map(|w| ((w[1].0 - w[0].0).powi(2) + (w[1].1 - w[0].1).powi(2)).sqrt()).collect();
     let total: f32 = segs.iter().sum();
     let mut want = total * f;
     for (w, len) in pts.windows(2).zip(&segs) {
@@ -142,19 +143,32 @@ pub fn chevron_band_base(canvas: &mut Cv, r: Rect, rows: &[(f32, f32, AgentStatu
             _ => {}
         }
         let b = band_box(r, y0, h);
-        if s == AgentStatus::Blocked { red_boxes.rect(b.x, b.y, b.w, b.h) } else { boxes.rect(b.x, b.y, b.w, b.h) }
+        if s == AgentStatus::Blocked {
+            red_boxes.rect(b.x, b.y, b.w, b.h)
+        } else {
+            boxes.rect(b.x, b.y, b.w, b.h)
+        }
     }
     canvas.fill_path(&red, &Paint::color(gfx::alpha(Palette::RED, 0.85)));
     canvas.fill_path(&teal, &Paint::color(gfx::alpha(Palette::CYAN, 0.10)));
     canvas.fill_path(&boxes, &Paint::color(Palette::BLACK));
     canvas.fill_path(&red_boxes, &Paint::color(Palette::RED));
-    let lp = gfx::text_paint(&fonts.mono(), 22.0, gfx::alpha(Palette::CYAN, 0.9)).with_text_align(femtovg::Align::Center);
+    let lp =
+        gfx::text_paint(&fonts.mono(), 22.0, gfx::alpha(Palette::CYAN, 0.9)).with_text_align(femtovg::Align::Center);
     let wp = lp.clone().with_color(Palette::WHITE);
     for (i, &(y0, h, s)) in rows.iter().enumerate() {
         let b = band_box(r, y0, h);
-        gfx::text(canvas, r.x + r.w / 2.0, b.y + 21.0, &format!("MT-{:02}", i + 1), if s == AgentStatus::Blocked { &wp } else { &lp });
+        gfx::text(
+            canvas,
+            r.x + r.w / 2.0,
+            b.y + 21.0,
+            &format!("MT-{:02}", i + 1),
+            if s == AgentStatus::Blocked { &wp } else { &lp },
+        );
     }
-    let sp = gfx::text_paint(&fonts.bold(), 26.0, Palette::CYAN).with_text_align(femtovg::Align::Center).with_letter_spacing(2.0);
+    let sp = gfx::text_paint(&fonts.bold(), 26.0, Palette::CYAN)
+        .with_text_align(femtovg::Align::Center)
+        .with_letter_spacing(2.0);
     gfx::text(canvas, r.x + r.w / 2.0, r.bottom() - 10.0, "SYNC", &sp);
 }
 
@@ -164,7 +178,11 @@ pub fn chevron_band_live(canvas: &mut Cv, r: Rect, rows: &[(f32, f32, AgentStatu
     let step = 26.0;
     let offset = if moving { (t * 1.5).fract() * step } else { 0.0 };
     let boxes: Vec<Rect> = rows.iter().map(|&(y0, h, _)| band_box(r, y0, h)).collect();
-    let clear = |y: f32| y > r.y + 2.0 && y + 14.0 < r.bottom() - 40.0 && !boxes.iter().any(|b| y + 14.0 > b.y - 2.0 && y < b.bottom() + 2.0);
+    let clear = |y: f32| {
+        y > r.y + 2.0
+            && y + 14.0 < r.bottom() - 40.0
+            && !boxes.iter().any(|b| y + 14.0 > b.y - 2.0 && y < b.bottom() + 2.0)
+    };
     let mut p = Path::new();
     let mut y = r.y - step + offset;
     while y < r.bottom() {
@@ -201,7 +219,14 @@ pub fn ruler_ticks(canvas: &mut Cv, x: f32, y: f32, len: f32, vertical: bool, ma
     let step = len / n as f32;
     let mut p = Path::new();
     for i in 0..=n {
-        let tick = max_tick * if i % 10 == 0 { 1.0 } else if i % 5 == 0 { 0.66 } else { 0.4 };
+        let tick = max_tick
+            * if i % 10 == 0 {
+                1.0
+            } else if i % 5 == 0 {
+                0.66
+            } else {
+                0.4
+            };
         let o = i as f32 * step;
         if vertical {
             p.move_to(x, y + o);

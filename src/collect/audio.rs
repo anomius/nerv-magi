@@ -100,7 +100,8 @@ mod tests {
 
     #[test]
     fn description_then_nick() {
-        let inspect = "id 91, type PipeWire:Interface:Node\n  * node.description = \"WH-1000XM5\"\n  * node.nick = \"HDMI 1\"\n";
+        let inspect =
+            "id 91, type PipeWire:Interface:Node\n  * node.description = \"WH-1000XM5\"\n  * node.nick = \"HDMI 1\"\n";
         assert_eq!(parse_description(inspect).as_deref(), Some("WH-1000XM5"));
         assert_eq!(parse_description("  * node.nick = \"HDMI 1\"").as_deref(), Some("HDMI 1"));
         assert_eq!(parse_description(""), None);
@@ -108,7 +109,10 @@ mod tests {
         let hdmi = "  * node.description = \"Core Ultra 200H/200V Series Processors HD Audio HDMI / DisplayPort 1 Output\"\n  * node.nick = \"HDMI 1\"\n";
         assert_eq!(parse_description(hdmi).as_deref(), Some("HDMI 1"));
         let long_no_nick = "  * node.description = \"Core Ultra 200H/200V Series Processors HD Audio Speaker\"\n";
-        assert_eq!(parse_description(long_no_nick).as_deref(), Some("Core Ultra 200H/200V Series Processors HD Audio Speaker"));
+        assert_eq!(
+            parse_description(long_no_nick).as_deref(),
+            Some("Core Ultra 200H/200V Series Processors HD Audio Speaker")
+        );
         let exactly_24 = "  * node.description = \"abcdefghijklmnopqrstuvwx\"\n  * node.nick = \"n\"\n";
         assert_eq!(parse_description(exactly_24).as_deref(), Some("abcdefghijklmnopqrstuvwx"));
     }

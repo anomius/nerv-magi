@@ -79,11 +79,25 @@ pub fn table(ctx: &mut Ctx, t: Rect, max: usize, highlight_mem: usize) {
         gfx::text(c, t.x + name_x, base, &name, &dp);
         let cc = cpu_color(p.cpu);
         gfx::text(c, t.x + cpu_r, base, &format!("{:.1}", p.cpu), &dr.clone().with_color(cc));
-        gfx::seg_bar(c, Rect::new(t.x + cpu_bar.0, y + 9.0, cpu_bar.1, 14.0), (p.cpu / 100.0).clamp(0.0, 1.0), 10, cc, gfx::alpha(Palette::DIM, 0.3));
+        gfx::seg_bar(
+            c,
+            Rect::new(t.x + cpu_bar.0, y + 9.0, cpu_bar.1, 14.0),
+            (p.cpu / 100.0).clamp(0.0, 1.0),
+            10,
+            cc,
+            gfx::alpha(Palette::DIM, 0.3),
+        );
         let hot_mem = mem_cut.is_some_and(|cut| p.rss_bytes >= cut);
         let mem_color = if hot_mem { Palette::AMBER } else { Palette::WHITE };
         gfx::text(c, t.x + mem_r, base, &fmt_bytes(p.rss_bytes), &dr.clone().with_color(mem_color));
-        gfx::seg_bar(c, Rect::new(t.x + mem_bar.0, y + 9.0, mem_bar.1, 14.0), p.rss_bytes as f32 / max_rss as f32, 10, gfx::alpha(mem_color, 0.8), gfx::alpha(Palette::DIM, 0.3));
+        gfx::seg_bar(
+            c,
+            Rect::new(t.x + mem_bar.0, y + 9.0, mem_bar.1, 14.0),
+            p.rss_bytes as f32 / max_rss as f32,
+            10,
+            gfx::alpha(mem_color, 0.8),
+            gfx::alpha(Palette::DIM, 0.3),
+        );
         gfx::text(c, t.x + thr_r, base, &p.threads.to_string(), &dim);
         let sc = if p.state == 'R' { Palette::CYAN } else { gfx::alpha(Palette::WHITE, 0.45) };
         gfx::text(c, t.x + s_x, base, &p.state.to_string(), &dp.clone().with_color(sc));

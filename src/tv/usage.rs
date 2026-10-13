@@ -63,7 +63,8 @@ pub fn limits_line(limits: &[PlanLimits], now: SystemTime) -> String {
                 .windows
                 .iter()
                 .map(|w| {
-                    let reset = w.resets_at.map(|r| format!(" ({})", fmt_reset(r.duration_since(now).unwrap_or_default())));
+                    let reset =
+                        w.resets_at.map(|r| format!(" ({})", fmt_reset(r.duration_since(now).unwrap_or_default())));
                     format!("{} {:.0}%{}", w.label, w.used_pct, reset.unwrap_or_default())
                 })
                 .collect();
@@ -105,10 +106,23 @@ mod tests {
     #[test]
     fn limits_line_lists_providers_and_countdowns() {
         let now = SystemTime::UNIX_EPOCH + Duration::from_secs(1_800_000_000);
-        let w = |label: &str, pct: f32, secs: u64| LimitWindow { label: label.into(), used_pct: pct, resets_at: Some(now + Duration::from_secs(secs)), window_minutes: None };
+        let w = |label: &str, pct: f32, secs: u64| LimitWindow {
+            label: label.into(),
+            used_pct: pct,
+            resets_at: Some(now + Duration::from_secs(secs)),
+            window_minutes: None,
+        };
         let limits = vec![
-            PlanLimits { provider: "claude".into(), windows: vec![w("5H", 37.4, 2 * 3600 + 14 * 60), w("7D", 12.0, 4 * 86400)], ..Default::default() },
-            PlanLimits { provider: "codex".into(), windows: vec![LimitWindow { resets_at: None, ..w("WEEK", 17.0, 0) }], ..Default::default() },
+            PlanLimits {
+                provider: "claude".into(),
+                windows: vec![w("5H", 37.4, 2 * 3600 + 14 * 60), w("7D", 12.0, 4 * 86400)],
+                ..Default::default()
+            },
+            PlanLimits {
+                provider: "codex".into(),
+                windows: vec![LimitWindow { resets_at: None, ..w("WEEK", 17.0, 0) }],
+                ..Default::default()
+            },
         ];
         assert_eq!(limits_line(&limits, now), "CLAUDE 5H 37% (2h14m) · 7D 12% (4d00h) │ CODEX WEEK 17%");
         assert_eq!(limits_line(&[], now), "");

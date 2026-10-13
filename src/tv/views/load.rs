@@ -61,7 +61,12 @@ pub fn draw(ctx: &mut Ctx, layout: &Layout) {
     memory_stack(ctx, Rect::new(120.0, 1290.0, 1500.0, 720.0), &sys);
     let t = Rect::new(1660.0, 1290.0, 2020.0, 720.0);
     plate::plate(ctx.canvas, t, plate::Cuts::BR, "PROCESSES", Some("演算"), Palette::ORANGE, ctx.fonts);
-    procs::table(ctx, Rect::new(t.x + 26.0, t.y + plate::PLATE_TOP + 4.0, t.w - 52.0, t.h - plate::PLATE_TOP - 26.0), 25, 3);
+    procs::table(
+        ctx,
+        Rect::new(t.x + 26.0, t.y + plate::PLATE_TOP + 4.0, t.w - 52.0, t.h - plate::PLATE_TOP - 26.0),
+        25,
+        3,
+    );
     caution_column(ctx, Rect::new(3712.0, 214.0, 104.0, 1796.0), &sys);
     ticker::draw(ctx, layout.ticker);
 }
@@ -73,7 +78,15 @@ pub fn title_band(ctx: &mut Ctx, r: Rect, title: &str, kanji: &str) {
     let (_, _, _, _, h, m, s) = header::local_time(ctx.state.now);
     let cp = gfx::text_paint(&fonts.segment(), 72.0, Palette::GREEN).with_text_align(Align::Right);
     if !ctx.layer.base() {
-        gfx::glow_text(c, r.right() - 24.0, r.y + 82.0, &format!("{h:02}:{m:02}:{s:02}"), &cp, gfx::alpha(Palette::GREEN, 0.8), 10.0);
+        gfx::glow_text(
+            c,
+            r.right() - 24.0,
+            r.y + 82.0,
+            &format!("{h:02}:{m:02}:{s:02}"),
+            &cp,
+            gfx::alpha(Palette::GREEN, 0.8),
+            10.0,
+        );
         return;
     }
     let mut band = Path::new();
@@ -88,9 +101,18 @@ pub fn title_band(ctx: &mut Ctx, r: Rect, title: &str, kanji: &str) {
     gfx::text(c, r.x + 50.0 + w, r.y + 72.0, kanji, &gfx::text_paint(&fonts.mincho(), 56.0, Palette::BLACK));
     gfx::text(c, r.right() - 24.0, r.y + 82.0, "88:88:88", &cp.clone().with_color(gfx::alpha(Palette::GREEN, 0.12)));
     if ctx.layer.live() {
-        gfx::glow_text(c, r.right() - 24.0, r.y + 82.0, &format!("{h:02}:{m:02}:{s:02}"), &cp, gfx::alpha(Palette::GREEN, 0.8), 10.0);
+        gfx::glow_text(
+            c,
+            r.right() - 24.0,
+            r.y + 82.0,
+            &format!("{h:02}:{m:02}:{s:02}"),
+            &cp,
+            gfx::alpha(Palette::GREEN, 0.8),
+            10.0,
+        );
     }
-    let host = ctx.state.sysx.as_ref().map_or(String::new(), |x| format!("{} · {} · {}", x.hostname, x.cpu_model, x.kernel));
+    let host =
+        ctx.state.sysx.as_ref().map_or(String::new(), |x| format!("{} · {} · {}", x.hostname, x.cpu_model, x.kernel));
     let hp = gfx::text_paint(&fonts.mono(), 30.0, gfx::alpha(Palette::ORANGE, 0.85));
     gfx::text(c, r.x + 1440.0, r.y + 62.0, &gfx::ellipsize(c, &hp, &host, 1700.0), &hp);
     gfx::line(c, r.x + 1300.0, r.bottom(), r.right(), r.bottom(), Palette::ORANGE, 3.0);
@@ -107,7 +129,13 @@ fn readouts(ctx: &mut Ctx, r: Rect, sys: &SysState) {
         ("TOXICITY LEVEL", "汚染", format!("{cpu:.1}"), "%", tag(cpu, 70.0, th.cpu_max * 100.0, true)),
         ("L.C.L. PURITY", "純度", format!("{purity:.1}"), "%", tag(purity, low_pct, crit_pct, false)),
         ("ELAPSED TIME", "経過", header::fmt_uptime(sys.uptime_s), "", Tag::Ok),
-        ("TEMP", "温度", temp.map_or("--".into(), |t| format!("{t:.0}")), "°C", temp.map_or(Tag::Ok, |t| tag(t, 80.0, th.cpu_temp_max_c, true))),
+        (
+            "TEMP",
+            "温度",
+            temp.map_or("--".into(), |t| format!("{t:.0}")),
+            "°C",
+            temp.map_or(Tag::Ok, |t| tag(t, 80.0, th.cpu_temp_max_c, true)),
+        ),
     ];
     let w = (r.w - 3.0 * 24.0) / 4.0;
     for (i, (label, kanji, value, unit, tg)) in items.iter().enumerate() {
@@ -116,7 +144,8 @@ fn readouts(ctx: &mut Ctx, r: Rect, sys: &SysState) {
         plate::plate(ctx.canvas, b, cuts, label, None, Palette::ORANGE, ctx.fonts);
         let c = &mut *ctx.canvas;
         let color = tag_color(*tg);
-        let kp = gfx::text_paint(&ctx.fonts.mincho(), 34.0, gfx::alpha(Palette::ORANGE, 0.8)).with_text_align(Align::Right);
+        let kp =
+            gfx::text_paint(&ctx.fonts.mincho(), 34.0, gfx::alpha(Palette::ORANGE, 0.8)).with_text_align(Align::Right);
         gfx::text(c, b.right() - 30.0, b.y + 32.0, kanji, &kp);
         let seg = gfx::text_paint(&ctx.fonts.segment(), 120.0, color);
         let vw = gfx::glow_text(c, b.x + 40.0, b.y + 196.0, value, &seg, gfx::alpha(color, 0.6), 10.0);
@@ -132,7 +161,13 @@ fn readouts(ctx: &mut Ctx, r: Rect, sys: &SysState) {
         } else {
             gfx::fill_rect(c, tag_r, tc);
         }
-        gfx::text_center(c, tag_r, word, &gfx::text_paint(&ctx.fonts.bold(), 30.0, if *tg == Tag::Ok { tc } else { Palette::BLACK }).with_letter_spacing(3.0));
+        gfx::text_center(
+            c,
+            tag_r,
+            word,
+            &gfx::text_paint(&ctx.fonts.bold(), 30.0, if *tg == Tag::Ok { tc } else { Palette::BLACK })
+                .with_letter_spacing(3.0),
+        );
     }
 }
 
@@ -151,7 +186,13 @@ fn core_bank(ctx: &mut Ctx, r: Rect, sys: &SysState) {
         let cx = area.x + slot * (i as f32 + 0.5);
         let bar = Rect::new(cx - bw / 2.0, area.y, bw, area.h);
         // cyan → amber → red by value
-        let on = if v > 0.9 { Palette::RED } else if v > 0.7 { Palette::AMBER } else { Palette::CYAN };
+        let on = if v > 0.9 {
+            Palette::RED
+        } else if v > 0.7 {
+            Palette::AMBER
+        } else {
+            Palette::CYAN
+        };
         gfx::seg_bar(c, bar, v, 30, on, gfx::alpha(Palette::CYAN, 0.10));
         gfx::text(c, cx, area.bottom() + 32.0, &format!("{:.0}", v * 100.0), &vp);
         gfx::text(c, cx, area.bottom() + 62.0, &format!("C{i:02}"), &np);
@@ -165,7 +206,8 @@ fn core_bank(ctx: &mut Ctx, r: Rect, sys: &SysState) {
 fn langley(ctx: &mut Ctx, r: Rect, sys: &SysState) {
     plate::plate(ctx.canvas, r, plate::Cuts::TR_BL, "SYNC PLOT · 120 S", Some("同期"), Palette::ORANGE, ctx.fonts);
     let g = Rect::new(r.x + 90.0, r.y + plate::PLATE_TOP + 20.0, r.w - 130.0, r.h - plate::PLATE_TOP - 70.0);
-    let rings: Vec<Vec<f32>> = CORE_KEYS.iter().take(sys.cpu_cores.len()).map(|k| ctx.anim.ring_values(k).to_vec()).collect();
+    let rings: Vec<Vec<f32>> =
+        CORE_KEYS.iter().take(sys.cpu_cores.len()).map(|k| ctx.anim.ring_values(k).to_vec()).collect();
     let c = &mut *ctx.canvas;
     gfx::fill_rect(c, g, Palette::BLACK);
     let mut grid = Path::new();
@@ -191,7 +233,11 @@ fn langley(ctx: &mut Ctx, r: Rect, sys: &SysState) {
         for (k, v) in ring.iter().enumerate() {
             let x = g.x + g.w * (start + k as f32) / (cap - 1.0);
             let y = g.bottom() - g.h * v.clamp(0.0, 1.0);
-            if k == 0 { p.move_to(x, y) } else { p.line_to(x, y) }
+            if k == 0 {
+                p.move_to(x, y)
+            } else {
+                p.line_to(x, y)
+            }
         }
         let color = load_color(sys.cpu_cores.get(i).copied().unwrap_or(0.0));
         c.stroke_path(&p, &Paint::color(gfx::alpha(color, 0.35)).with_line_width(2.0));
@@ -220,11 +266,21 @@ fn memory_stack(ctx: &mut Ctx, r: Rect, sys: &SysState) {
     let cached = ctx.state.sysx.as_ref().map_or(0, |x| x.mem_cached);
     let total = sys.mem_total.max(1) as f32;
     let rows: Vec<(&str, f32, String, Color)> = vec![
-        ("USED", sys.mem_used() as f32 / total, format!("{} / {}", gb(sys.mem_used()), gb(sys.mem_total)), Palette::GREEN),
+        (
+            "USED",
+            sys.mem_used() as f32 / total,
+            format!("{} / {}", gb(sys.mem_used()), gb(sys.mem_total)),
+            Palette::GREEN,
+        ),
         ("CACHED", cached as f32 / total, gb(cached), Palette::CYAN),
         // MemFree is not in the contract; MemAvailable is the number that matters
         ("AVAIL", sys.mem_available as f32 / total, gb(sys.mem_available), Palette::LCD),
-        ("SWAP", sys.swap_used as f32 / sys.swap_total.max(1) as f32, format!("{} / {}", gb(sys.swap_used), gb(sys.swap_total)), Palette::AMBER),
+        (
+            "SWAP",
+            sys.swap_used as f32 / sys.swap_total.max(1) as f32,
+            format!("{} / {}", gb(sys.swap_used), gb(sys.swap_total)),
+            Palette::AMBER,
+        ),
     ];
     let (mhz, max, busy) = sys.gpu.as_ref().map_or((0, 0, 0.0), |g| (g.mhz, g.max_mhz, g.busy));
     let temps = [("CPU PKG", sys.temp_cpu_c), ("NVME", sys.temp_nvme_c), ("ACPI", sys.temp_acpi_c)];
@@ -250,18 +306,39 @@ fn memory_stack(ctx: &mut Ctx, r: Rect, sys: &SysState) {
     y += 58.0;
     for (label, t) in temps {
         let frac = t.map_or(0.0, |t| (t / 100.0).clamp(0.0, 1.0));
-        let color = t.map_or(Palette::DIM, |t| if t >= 90.0 { Palette::RED } else if t >= 75.0 { Palette::AMBER } else { Palette::GREEN });
+        let color = t.map_or(Palette::DIM, |t| {
+            if t >= 90.0 {
+                Palette::RED
+            } else if t >= 75.0 {
+                Palette::AMBER
+            } else {
+                Palette::GREEN
+            }
+        });
         row(c, y, label, frac, &t.map_or("N/A".into(), |t| format!("{t:.0}°C")), color);
         y += 58.0;
     }
-    row(c, y, "FAN", sys.fan_rpm.map_or(0.0, |f| (f as f32 / 6000.0).clamp(0.0, 1.0)), &sys.fan_rpm.map_or("N/A".into(), |f| format!("{f} RPM")), Palette::CYAN);
+    row(
+        c,
+        y,
+        "FAN",
+        sys.fan_rpm.map_or(0.0, |f| (f as f32 / 6000.0).clamp(0.0, 1.0)),
+        &sys.fan_rpm.map_or("N/A".into(), |f| format!("{f} RPM")),
+        Palette::CYAN,
+    );
 }
 
 /// Lines of a core's tag cell, top to bottom: `C03` · `CAUTION`/`DANGER` (hot cores only) ·
 /// `75%` (hot only), dropping lines the cell is too short for (the word goes last).
 pub fn tag_lines(core: usize, v: f32, cell_h: f32) -> Vec<String> {
     let id = format!("C{core:02}");
-    let word = if v > 0.9 { "DANGER" } else if v > 0.7 { "CAUTION" } else { return vec![id] };
+    let word = if v > 0.9 {
+        "DANGER"
+    } else if v > 0.7 {
+        "CAUTION"
+    } else {
+        return vec![id];
+    };
     let pct = format!("{:.0}%", v * 100.0);
     match cell_h {
         h if h >= 100.0 => vec![id, word.into(), pct],
@@ -279,7 +356,13 @@ fn caution_column(ctx: &mut Ctx, r: Rect, sys: &SysState) {
     for (i, &v) in sys.cpu_cores.iter().enumerate() {
         let b = Rect::new(r.x, r.y + i as f32 * h + 4.0, r.w, h - 8.0);
         let hot = v > 0.7;
-        let fill = if v > 0.9 { Palette::RED } else if hot { Palette::AMBER } else { gfx::alpha(Palette::CYAN, 0.15) };
+        let fill = if v > 0.9 {
+            Palette::RED
+        } else if hot {
+            Palette::AMBER
+        } else {
+            gfx::alpha(Palette::CYAN, 0.15)
+        };
         gfx::fill_rect(c, b, fill);
         let lines = tag_lines(i, v, b.h);
         let step = 34.0;

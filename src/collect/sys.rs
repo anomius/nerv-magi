@@ -242,9 +242,11 @@ pub fn parse_uptime(text: &str) -> u64 {
 /// In `hwmon_root` (normally `/sys/class/hwmon`), the `<prefix>N_input` of the chip whose `name` is
 /// `chip`: the one whose `<prefix>N_label` equals `label`, else the lowest-numbered input.
 pub fn hwmon_file(hwmon_root: &Path, chip: &str, prefix: &str, label: Option<&str>) -> Option<PathBuf> {
-    let dir = fs::read_dir(hwmon_root).ok()?.flatten().map(|e| e.path()).find(|d| {
-        fs::read_to_string(d.join("name")).is_ok_and(|n| n.trim() == chip)
-    })?;
+    let dir = fs::read_dir(hwmon_root)
+        .ok()?
+        .flatten()
+        .map(|e| e.path())
+        .find(|d| fs::read_to_string(d.join("name")).is_ok_and(|n| n.trim() == chip))?;
     let mut inputs: Vec<(u32, PathBuf)> = fs::read_dir(&dir)
         .ok()?
         .flatten()
@@ -256,9 +258,9 @@ pub fn hwmon_file(hwmon_root: &Path, chip: &str, prefix: &str, label: Option<&st
         .collect();
     inputs.sort();
     if let Some(want) = label {
-        let labelled = inputs.iter().find(|(n, _)| {
-            fs::read_to_string(dir.join(format!("{prefix}{n}_label"))).is_ok_and(|l| l.trim() == want)
-        });
+        let labelled = inputs
+            .iter()
+            .find(|(n, _)| fs::read_to_string(dir.join(format!("{prefix}{n}_label"))).is_ok_and(|l| l.trim() == want));
         if let Some((_, p)) = labelled {
             return Some(p.clone());
         }
@@ -330,7 +332,8 @@ impl Sampler {
     fn new() -> Self {
         let hw = Path::new("/sys/class/hwmon");
         let gpu = fs::read_dir("/sys/class/drm").ok().and_then(|it| {
-            let mut cards: Vec<PathBuf> = it.flatten().map(|e| e.path()).filter(|p| p.join("gt_cur_freq_mhz").is_file()).collect();
+            let mut cards: Vec<PathBuf> =
+                it.flatten().map(|e| e.path()).filter(|p| p.join("gt_cur_freq_mhz").is_file()).collect();
             cards.sort();
             cards.into_iter().next()
         });
@@ -403,7 +406,9 @@ impl Sampler {
             let max_mhz = read_u64(&card.join("gt_max_freq_mhz")).unwrap_or(0) as u32;
             let rc6 = read_u64(&card.join("gt/gt0/rc6_residency_ms"));
             let busy = match (rc6, self.prev_rc6_ms, dt) {
-                (Some(cur), Some(prev), Some(dt)) => (1.0 - cur.saturating_sub(prev) as f64 / (dt * 1000.0)).clamp(0.0, 1.0) as f32,
+                (Some(cur), Some(prev), Some(dt)) => {
+                    (1.0 - cur.saturating_sub(prev) as f64 / (dt * 1000.0)).clamp(0.0, 1.0) as f32
+                }
                 _ => 0.0,
             };
             self.prev_rc6_ms = rc6;
@@ -580,7 +585,8 @@ mod tests {
     #[test]
     fn root_disk_is_first_whole_disk() {
         assert_eq!(root_disk(include_str!("../../tests/fixtures/diskstats.txt")).as_deref(), Some("nvme0n1"));
-        let sd = "   7 0 loop0 1 0 2 0 0 0 0 0 0 0 0\n   8 1 sda1 1 0 2 0 0 0 0 0 0 0 0\n   8 0 sda 1 0 2 0 0 0 0 0 0 0 0\n";
+        let sd =
+            "   7 0 loop0 1 0 2 0 0 0 0 0 0 0 0\n   8 1 sda1 1 0 2 0 0 0 0 0 0 0 0\n   8 0 sda 1 0 2 0 0 0 0 0 0 0 0\n";
         assert_eq!(root_disk(sd).as_deref(), Some("sda"));
         assert_eq!(root_disk(""), None);
     }

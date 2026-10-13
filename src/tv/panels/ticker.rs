@@ -51,12 +51,17 @@ pub fn draw(ctx: &mut Ctx, r: Rect) {
 
     if items.is_empty() {
         let p = gfx::text_paint(&fonts.display(), 32.0, gfx::alpha(Palette::WHITE, 0.5)).with_letter_spacing(3.0);
-        let s = format!("NO TRANSITIONS YET · MONITORING {} PILOTS IN {} SECTORS", ctx.state.herdr.agents.len(), ctx.state.herdr.workspaces.len());
+        let s = format!(
+            "NO TRANSITIONS YET · MONITORING {} PILOTS IN {} SECTORS",
+            ctx.state.herdr.agents.len(),
+            ctx.state.herdr.workspaces.len()
+        );
         gfx::text(c, lane.x, base, &s, &p);
         return;
     }
     // right-end count
-    let cp = gfx::text_paint(&fonts.mono(), 24.0, gfx::alpha(Palette::ORANGE, 0.8)).with_text_align(femtovg::Align::Right);
+    let cp =
+        gfx::text_paint(&fonts.mono(), 24.0, gfx::alpha(Palette::ORANGE, 0.8)).with_text_align(femtovg::Align::Right);
     gfx::text(c, r.right() - 90.0, base, &format!("{}", ctx.state.transitions), &cp);
     if live_layer {
         lane_items(ctx, lane, base, &items);
@@ -80,7 +85,14 @@ fn lane_items(ctx: &mut Ctx, lane: Rect, base: f32, items: &[(String, String, Ag
                 .iter()
                 .map(|(agent, hhmm, st)| {
                     let sp = gfx::text_paint(&fonts.bold(), 34.0, status_color(*st)).with_letter_spacing(2.0);
-                    gfx::text_width(c, hhmm, &tp) + 16.0 + gfx::text_width(c, agent, &np) + 16.0 + gfx::text_width(c, "→", &tp) + 16.0 + gfx::text_width(c, st.label(), &sp) + gfx::text_width(c, "  ··  ", &sep)
+                    gfx::text_width(c, hhmm, &tp)
+                        + 16.0
+                        + gfx::text_width(c, agent, &np)
+                        + 16.0
+                        + gfx::text_width(c, "→", &tp)
+                        + 16.0
+                        + gfx::text_width(c, st.label(), &sp)
+                        + gfx::text_width(c, "  ··  ", &sep)
                 })
                 .collect()
         })
@@ -129,8 +141,18 @@ mod tests {
     fn ticker_text_lists_newest_first() {
         use crate::state::{tests::t0, *};
         let mut s = State::new(t0());
-        s.ticker.push_front(TickerEvent { at: t0(), agent: "a".into(), from: AgentStatus::Working, to: AgentStatus::Done });
-        s.ticker.push_front(TickerEvent { at: t0(), agent: "b".into(), from: AgentStatus::Working, to: AgentStatus::Blocked });
+        s.ticker.push_front(TickerEvent {
+            at: t0(),
+            agent: "a".into(),
+            from: AgentStatus::Working,
+            to: AgentStatus::Done,
+        });
+        s.ticker.push_front(TickerEvent {
+            at: t0(),
+            agent: "b".into(),
+            from: AgentStatus::Working,
+            to: AgentStatus::Blocked,
+        });
         let items = ticker_items(&s);
         assert_eq!(items[0].0, "b");
         assert_eq!(items[1].0, "a");

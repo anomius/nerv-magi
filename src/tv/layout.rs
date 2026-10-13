@@ -104,7 +104,12 @@ impl Layout {
     /// Design units → window pixels.
     #[allow(dead_code)] // layout tests
     pub fn to_px(&self, r: Rect) -> Rect {
-        Rect::new(r.x * self.scale + self.origin.0, r.y * self.scale + self.origin.1, r.w * self.scale, r.h * self.scale)
+        Rect::new(
+            r.x * self.scale + self.origin.0,
+            r.y * self.scale + self.origin.1,
+            r.w * self.scale,
+            r.h * self.scale,
+        )
     }
 }
 
@@ -117,8 +122,14 @@ mod tests {
         let l = Layout::new(3840.0, 2160.0);
         let rs = l.content_boxes();
         assert_eq!(rs.len(), 12);
-        for r in &rs { assert!(r.x >= 0.0 && r.y >= 0.0 && r.x + r.w <= 3840.0 && r.y + r.h <= 2160.0, "{r:?}"); }
-        for (i, a) in rs.iter().enumerate() { for b in &rs[i + 1..] { assert!(!a.overlaps(b), "{a:?} {b:?}"); } }
+        for r in &rs {
+            assert!(r.x >= 0.0 && r.y >= 0.0 && r.x + r.w <= 3840.0 && r.y + r.h <= 2160.0, "{r:?}");
+        }
+        for (i, a) in rs.iter().enumerate() {
+            for b in &rs[i + 1..] {
+                assert!(!a.overlaps(b), "{a:?} {b:?}");
+            }
+        }
     }
 
     #[test]
@@ -144,7 +155,10 @@ mod tests {
             let l = Layout::new(w, h);
             for r in l.content_boxes() {
                 let px = l.to_px(r);
-                assert!(px.x >= -0.5 && px.y >= -0.5 && px.x + px.w <= w + 0.5 && px.y + px.h <= h + 0.5, "{w}x{h} {px:?}");
+                assert!(
+                    px.x >= -0.5 && px.y >= -0.5 && px.x + px.w <= w + 0.5 && px.y + px.h <= h + 0.5,
+                    "{w}x{h} {px:?}"
+                );
             }
         }
         assert_eq!(Layout::new(1920.0, 1080.0).scale, 0.5);

@@ -57,7 +57,18 @@ pub fn draw(ctx: &mut Ctx, r: Rect) {
         }
         if live_layer {
             let shown = if left.is_some() { Palette::TIMER } else { gfx::alpha(Palette::TIMER, 0.45) };
-            crate::tv::sprites::glow_text(c, sprites, "timer", x0, base, &text, &seg, shown, gfx::alpha(Palette::TIMER, 0.7), 14.0);
+            crate::tv::sprites::glow_text(
+                c,
+                sprites,
+                "timer",
+                x0,
+                base,
+                &text,
+                &seg,
+                shown,
+                gfx::alpha(Palette::TIMER, 0.7),
+                14.0,
+            );
         }
         if !base_layer {
             return;
@@ -75,7 +86,13 @@ pub fn draw(ctx: &mut Ctx, r: Rect) {
             }
             let fg = if active { Palette::BLACK } else { gfx::alpha(Palette::ORANGE, 0.5) };
             let w = gfx::text(c, b.x + 10.0, b.y + 37.0, kanji, &gfx::text_paint(&fonts.mincho(), 30.0, fg));
-            gfx::text(c, b.x + 18.0 + w, b.y + 35.0, latin, &gfx::text_paint(&fonts.display(), 24.0, fg).with_letter_spacing(1.5));
+            gfx::text(
+                c,
+                b.x + 18.0 + w,
+                b.y + 35.0,
+                latin,
+                &gfx::text_paint(&fonts.display(), 24.0, fg).with_letter_spacing(1.5),
+            );
             x += 196.0 + 10.0;
         }
         x += 18.0;
@@ -135,7 +152,13 @@ fn battery_table(ctx: &mut Ctx, r: Rect) {
     // charge bar across the top
     let bar = Rect::new(r.x, r.y, r.w, 18.0);
     let frac = pct.unwrap_or(0.0) / 100.0;
-    let on = if frac < 0.15 { Palette::RED } else if frac < 0.3 { Palette::AMBER } else { Palette::LCD };
+    let on = if frac < 0.15 {
+        Palette::RED
+    } else if frac < 0.3 {
+        Palette::AMBER
+    } else {
+        Palette::LCD
+    };
     gfx::seg_bar(c, bar, frac, 40, on, gfx::alpha(Palette::DIM, 0.35));
 
     let lp = gfx::text_paint(&fonts.label(), 22.0, gfx::alpha(Palette::ORANGE, 0.75)).with_letter_spacing(1.5);

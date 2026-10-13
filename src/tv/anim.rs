@@ -210,7 +210,13 @@ mod tests {
     fn memo_recomputes_only_when_the_key_changes() {
         let mut m: Memo<(u64, u32), Vec<f32>> = Memo::default();
         let mut calls = 0;
-        let mut get = |m: &mut Memo<(u64, u32), Vec<f32>>, k| m.get(k, || { calls += 1; vec![k.0 as f32] }).clone();
+        let mut get = |m: &mut Memo<(u64, u32), Vec<f32>>, k| {
+            m.get(k, || {
+                calls += 1;
+                vec![k.0 as f32]
+            })
+            .clone()
+        };
         assert_eq!(get(&mut m, (1, 7)), vec![1.0]);
         assert_eq!(get(&mut m, (1, 7)), vec![1.0]);
         assert_eq!(get(&mut m, (2, 7)), vec![2.0]);
