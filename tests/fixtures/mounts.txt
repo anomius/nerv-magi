@@ -1,0 +1,8 @@
+/dev/mapper/root / btrfs rw,relatime,compress=zstd:3,ssd,space_cache=v2,subvolid=299,subvol=/@ 0 0
+proc /proc proc rw,nosuid,nodev,noexec,relatime 0 0
+tmpfs /run tmpfs rw,nosuid,nodev,size=7894924k,nr_inodes=819200,mode=755,inode64 0 0
+/dev/mapper/root /home btrfs rw,relatime,compress=zstd:3,ssd,space_cache=v2,subvolid=257,subvol=/@home 0 0
+/dev/mapper/root /var/cache/pacman/pkg btrfs rw,relatime,compress=zstd:3,ssd,space_cache=v2,subvolid=259,subvol=/@pkg 0 0
+/dev/nvme0n1p1 /boot vfat rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=ascii 0 0
+overlay /var/lib/docker/overlay2/x/merged overlay rw,relatime,lowerdir=/a,upperdir=/b,workdir=/c 0 0
+/dev/sdb1 /run/media/user/My\040Disk exfat rw,nosuid,nodev,relatime 0 0

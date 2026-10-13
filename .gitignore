@@ -1,0 +1,15 @@
+target/
+*.png
+!docs/**/*.png
+
+# local-only notes, briefs, reports and dev-history backups (never published)
+.private/
+
+# promo video (promo/): renders, recorded footage, assets copied or synthesized at build time, deps
+promo/out/
+promo/public/footage/
+promo/public/fonts/
+promo/public/audio/
+node_modules/
+# local build settings (e.g. a jobs cap on a small machine)
+.cargo/config.toml

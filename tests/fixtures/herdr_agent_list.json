@@ -1,0 +1,73 @@
+{
+  "id": "cli:agent:list",
+  "result": {
+    "type": "agent_list",
+    "agents": [
+      {
+        "agent": "claude",
+        "agent_session": {
+          "agent": "claude",
+          "kind": "id",
+          "source": "herdr:claude",
+          "value": "00000000-0000-0000-0000-000000000001"
+        },
+        "agent_status": "working",
+        "cwd": "/home/user/project",
+        "focused": false,
+        "foreground_cwd": "/home/user/project",
+        "name": "alpha",
+        "pane_id": "w1:p1",
+        "revision": 1,
+        "state_change_seq": 16,
+        "tab_id": "w1:t1",
+        "terminal_id": "term_w1_p1",
+        "terminal_title": "Port search index",
+        "terminal_title_stripped": "Port search index",
+        "workspace_id": "w1"
+      },
+      {
+        "agent": "codex",
+        "agent_session": {
+          "agent": "codex",
+          "kind": "id",
+          "source": "herdr:codex",
+          "value": "00000000-0000-0000-0000-000000000002"
+        },
+        "agent_status": "blocked",
+        "cwd": "/home/user/project",
+        "focused": false,
+        "foreground_cwd": "/home/user/project",
+        "pane_id": "w1:p2",
+        "revision": 1,
+        "state_change_seq": 16,
+        "tab_id": "w1:t2",
+        "terminal_id": "term_w1_p2",
+        "terminal_title": "Needs approval",
+        "terminal_title_stripped": "Needs approval",
+        "workspace_id": "w1"
+      },
+      {
+        "agent": "claude",
+        "agent_session": {
+          "agent": "claude",
+          "kind": "id",
+          "source": "herdr:claude",
+          "value": "00000000-0000-0000-0000-000000000001"
+        },
+        "agent_status": "idle",
+        "cwd": "/home/user/project",
+        "focused": false,
+        "foreground_cwd": "/home/user/project",
+        "name": "gamma",
+        "pane_id": "w2:p1",
+        "revision": 1,
+        "state_change_seq": 16,
+        "tab_id": "w2:t1",
+        "terminal_id": "term_w2_p1",
+        "terminal_title": "gamma idle",
+        "terminal_title_stripped": "gamma idle",
+        "workspace_id": "w2"
+      }
+    ]
+  }
+}

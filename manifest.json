@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "anomius.nerv-magi",
+  "name": "NERV MAGI",
+  "version": "0.1.0",
+  "author": "anomius",
+  "license": "MIT",
+  "description": "Evangelion-style command board for your AI coding agents: herdr agents, system telemetry and now playing on a GPU dashboard you can cast to the TV.",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "NERV MAGI",
+    "description": "A hexagon that turns red when an agent is blocked. Click for the agent roster, open or cast the dashboard, and switch its views.",
+    "category": "AI",
+    "aliases": ["nerv", "magi", "herdr", "eva"],
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": {
+      "pollIntervalSec": 5,
+      "showCount": true
+    },
+    "schema": [
+      { "key": "pollIntervalSec", "type": "integer", "label": "Refresh interval (seconds)", "min": 2, "max": 60, "step": 1, "defaultValue": 5 },
+      { "key": "showCount", "type": "boolean", "label": "Show the active-agent count next to the icon", "defaultValue": true }
+    ]
+  }
+}

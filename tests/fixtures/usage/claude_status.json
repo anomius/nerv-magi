@@ -1,0 +1,1 @@
+{"session_id":"11111111-2222-4333-8444-555555555555","model":{"id":"claude-opus-5-5","display_name":"Opus 5.5"},"context_window":{"context_window_size":1000000},"cost":{"total_cost_usd":3.2},"rate_limits":{"five_hour":{"used_percentage":37.0,"resets_at":1791900000},"seven_day":{"used_percentage":12.5,"resets_at":"2026-10-20T00:00:00Z"}}}

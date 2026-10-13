@@ -1,0 +1,81 @@
+id = "nerv.magi"
+name = "NERV MAGI"
+version = "0.1.0"
+min_herdr_version = "0.9.0"
+description = "Evangelion-style live board of herdr agents, system telemetry, power and sound"
+platforms = ["linux"]
+
+[[build]]
+command = ["cargo", "build", "--release"]
+
+[[panes]]
+id = "hub"
+title = "NERV MAGI"
+placement = "split"
+command = ["./target/release/nerv", "hub"]
+
+[[actions]]
+id = "open-hub"
+title = "Open NERV MAGI hub"
+contexts = ["workspace"]
+command = ["sh", "-c", "\"$HERDR_BIN_PATH\" plugin pane open --plugin nerv.magi --entrypoint hub --placement split --direction right --focus"]
+
+[[actions]]
+id = "tv-start"
+title = "Start NERV MAGI on the TV"
+contexts = ["workspace"]
+command = ["./scripts/tv-start.sh"]
+
+[[actions]]
+id = "tv-stop"
+title = "Stop NERV MAGI TV"
+contexts = ["workspace"]
+command = ["./scripts/tv-stop.sh"]
+
+[[actions]]
+id = "tv-scanlines"
+title = "Cycle NERV MAGI TV scanlines (off/subtle/heavy/crt)"
+contexts = ["workspace"]
+command = ["./scripts/tv-scanlines.sh"]
+
+[[actions]]
+id = "tv-view-next"
+title = "NERV MAGI TV: next view"
+contexts = ["workspace"]
+command = ["./scripts/tv-ctl.sh", "next"]
+
+[[actions]]
+id = "tv-view-auto"
+title = "NERV MAGI TV: automatic rotation"
+contexts = ["workspace"]
+command = ["./scripts/tv-ctl.sh", "auto"]
+
+[[actions]]
+id = "tv-pin"
+title = "NERV MAGI TV: pin / unpin current view"
+contexts = ["workspace"]
+command = ["./scripts/tv-ctl.sh", "pin"]
+
+[[actions]]
+id = "tv-fullscreen"
+title = "NERV MAGI TV: toggle fullscreen"
+contexts = ["workspace"]
+command = ["./scripts/tv-ctl.sh", "fullscreen"]
+
+[[actions]]
+id = "tv-grain"
+title = "NERV MAGI TV: film grain on / off"
+contexts = ["workspace"]
+command = ["./scripts/tv-ctl.sh", "grain"]
+
+[[actions]]
+id = "tv-cast"
+title = "NERV MAGI: cast to the TV (AirPlay second desktop)"
+contexts = ["workspace"]
+command = ["./scripts/tv-cast.sh"]
+
+[[actions]]
+id = "tv-uncast"
+title = "NERV MAGI: stop casting"
+contexts = ["workspace"]
+command = ["./scripts/tv-uncast.sh"]
