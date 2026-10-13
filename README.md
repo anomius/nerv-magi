@@ -8,6 +8,11 @@ the TV, a terminal board inside herdr, and an Omarchy bar widget.
 No web view, no server, no Electron: one Rust binary drawing with OpenGL (femtovg) at about 3 % of
 one core at 4K.
 
+![NERV MAGI](docs/media/hero.webp)
+
+▶ **[Watch the launch video](docs/media/nerv-magi-promo.mp4)** (57 s, with sound). Full quality:
+[1080p60](https://github.com/anomius/nerv-magi/releases/download/v0.1.0/nerv-magi-x.mp4) · [4:5 for mobile](https://github.com/anomius/nerv-magi/releases/download/v0.1.0/nerv-magi-x-4x5.mp4)
+
 ![MAIN view](docs/media/main.jpg)
 
 | LOAD | SYNC | EMERGENCY |
@@ -227,6 +232,10 @@ screenshots and fixtures, and keep Eva an homage (no material from the series).
 - [herdr](https://herdr.dev), [Omarchy](https://omarchy.org),
   [omarchy-cast](https://github.com/jonspinks/omarchy-cast), [femtovg](https://github.com/femtovg/femtovg),
   [ratatui](https://ratatui.rs).
+- Launch video: made with [Remotion](https://www.remotion.dev) from real `nerv tv --record` footage of the
+  demo. The music is an original score plus two public-domain works, J. S. Bach's Cello Suite No. 1
+  (BWV 1007, Prelude) and Beethoven's Symphony No. 9 ("Ode to Joy"), rendered with FluidSynth and the
+  FluidR3_GM soundfont (MIT). Sources are in [`promo/`](promo/).
 - Visual language inspired by *Neon Genesis Evangelion*. This is a fan homage: not affiliated with
   or endorsed by khara, Inc. or Gainax, and it contains no material from the series.
 
