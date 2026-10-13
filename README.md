@@ -175,6 +175,35 @@ Everything stays on your machine. nerv reads `/proc` and `/sys`, herdr's socket 
 under `~/.claude` and `~/.codex` (read-only), and `playerctl` / `wpctl` / `cava` output. It never
 writes to herdr, to the agents or to their logs, and it makes no network requests.
 
+## What it runs (Omarchy widget)
+
+Plugins run unsandboxed inside the Omarchy shell, so here is everything this one does:
+
+- **Polls** `scripts/omarchy-status.sh` every 5 s (every 2 s while the panel is open). That script runs
+  `herdr agent list` and `herdr workspace list`, checks nerv's pidfile and, only while the panel is
+  open, `airplay-ctl status` from the omarchy-cast plugin if it is installed.
+- **Buttons** run this plugin's own scripts (`tv-start`, `tv-stop`, `tv-ctl`, `tv-cast`, `tv-uncast`).
+  *Hub* opens `nerv hub` in a terminal (`xdg-terminal-exec`). Clicking a pilot runs
+  `herdr agent focus <pane>`. Agent names, labels and titles reach commands only as arguments,
+  never through a shell.
+- **Build** (`scripts/install.sh`, run by you, never by the widget): `cargo build --release`, which
+  downloads crates from crates.io, then installs `~/.local/bin/nerv`. When installed as a plugin, the
+  build cache goes to `~/.cache/nerv-magi/`.
+- **Files it writes:** `~/.local/bin/nerv`, `~/.cache/nerv-magi/`, and `nerv-tv.pid`, `nerv-tv.cmd` and
+  `nerv-cava.conf` in `$XDG_RUNTIME_DIR`. *Cast to TV* also starts a transient user unit
+  (`nerv-tv-cast-watch`) that closes the dashboard when the TV goes away.
+- **It never** uses sudo, edits Hyprland or shell configuration, or touches herdr, the agents or their
+  logs (read-only).
+
+## Uninstall
+
+```bash
+omarchy plugin remove anomius.nerv-magi       # the bar widget
+herdr plugin uninstall nerv.magi              # or: herdr plugin unlink nerv.magi (a linked clone)
+rm -f ~/.local/bin/nerv
+rm -rf ~/.cache/nerv-magi ~/.config/nerv      # build cache and your config (optional)
+```
+
 ## Credits
 
 - Fonts (SIL Open Font License 1.1, bundled in `assets/fonts` with their licenses, fetched by

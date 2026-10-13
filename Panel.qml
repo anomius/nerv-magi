@@ -192,6 +192,7 @@ Panel {
             height: Math.max(title.implicitHeight, stateChip.implicitHeight)
 
             Text {
+              textFormat: Text.PlainText
               id: title
               anchors.left: parent.left
               anchors.verticalCenter: parent.verticalCenter
@@ -204,6 +205,7 @@ Panel {
             }
 
             Text {
+              textFormat: Text.PlainText
               id: stateChip
               anchors.right: parent.right
               anchors.verticalCenter: parent.verticalCenter
@@ -219,6 +221,7 @@ Panel {
           }
 
           Text {
+            textFormat: Text.PlainText
             width: parent.width
             visible: root.status.herdr
             text: root.counts.active + " active · " + root.counts.done + " complete · "
@@ -236,6 +239,7 @@ Panel {
             height: dashTitle.implicitHeight
 
             Text {
+              textFormat: Text.PlainText
               id: dashTitle
               anchors.left: parent.left
               text: "Dashboard"
@@ -246,6 +250,7 @@ Panel {
             }
 
             Text {
+              textFormat: Text.PlainText
               anchors.right: parent.right
               anchors.verticalCenter: dashTitle.verticalCenter
               text: root.busy ? root.busyLabel : root.tvLabel
@@ -256,6 +261,7 @@ Panel {
           }
 
           Text {
+            textFormat: Text.PlainText
             visible: !root.status.built
             width: parent.width
             wrapMode: Text.WordWrap
@@ -371,6 +377,7 @@ Panel {
             height: pilotsTitle.implicitHeight
 
             Text {
+              textFormat: Text.PlainText
               id: pilotsTitle
               anchors.left: parent.left
               text: "Pilots"
@@ -381,6 +388,7 @@ Panel {
             }
 
             Text {
+              textFormat: Text.PlainText
               anchors.right: parent.right
               anchors.verticalCenter: pilotsTitle.verticalCenter
               text: root.status.herdr ? root.agents.length + " in herdr" : ""
@@ -391,6 +399,7 @@ Panel {
           }
 
           Text {
+            textFormat: Text.PlainText
             visible: !root.status.herdr || root.agents.length === 0
             width: parent.width
             wrapMode: Text.WordWrap
@@ -452,6 +461,7 @@ Panel {
               }
 
               Text {
+                textFormat: Text.PlainText
                 id: rowWord
                 anchors.right: parent.right
                 anchors.rightMargin: Style.spacing.md

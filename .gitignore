@@ -13,3 +13,4 @@ promo/public/audio/
 node_modules/
 # local build settings (e.g. a jobs cap on a small machine)
 .cargo/config.toml
+!preview.png
