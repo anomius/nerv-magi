@@ -92,8 +92,11 @@ fi
 bash scripts/mem-guard.sh 3
 video=$work/video.mp4
 if (( k4 )); then
+  # memory: 4K frames are 33 MB each; the decoded-frame caches are capped, and the intermediate is
+  # x264 ultrafast at CRF 8 (preset fast holds ~2.4 GB at 4K; the final encode below is separate)
   pnpm exec remotion render "$comp" "$video" --props "$work/props.json" --scale 2 --concurrency 1 --jpeg-quality 95 \
-    --codec h264 --crf 10 --x264-preset fast --pixel-format yuv420p --muted --log=warn
+    --media-cache-size-in-bytes 536870912 --offthreadvideo-cache-size-in-bytes 536870912 \
+    --codec h264 --crf 8 --x264-preset ultrafast --pixel-format yuv420p --muted --log=warn
 else
   pnpm exec remotion render "$comp" "$video" --props "$work/props.json" --concurrency 2 \
     --codec h264 --crf 12 --x264-preset fast --pixel-format yuv420p --muted --log=warn

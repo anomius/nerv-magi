@@ -95,7 +95,8 @@ checks that the recorded clips are long enough for a map (a slow track plays mor
   (`scripts/sfx.mjs`), the click, the cue sheet and `scripts/check-sync.mjs` call it directly, and
   the sync check measures that every scripted hit is an onset in the rendered music on its frame.
 - **Real footage.** `scripts/record-footage.sh` records clips with `nerv tv --demo --record`
-  (headless, fixed 1/60 s clock) and 4K stills with `--snapshot` for sharp push-ins. The demo roster
+  (headless, fixed 1/60 s clock) and a `--snapshot` of MAIN at twice their size (`main-still.png`:
+  4K, or 8K for the 4K set) for sharp push-ins. The demo roster
   is made up. Footage is gitignored and regenerated on demand.
 - **Scenes** (`src/scenes/`): power-on, episode card, pattern detection, MAGI deliberation, the
   reveal (a match cut from the MAGI triad into the product's own MAGI panel, then four callouts),
