@@ -3,9 +3,9 @@
 // timeline (a slow track or a stretched section plays more of each clip). Exits 1 with the fix if not.
 //   preflight.mjs [tracks/x.json] [--footage public/footage]
 import { execFileSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { clipNeeds } from "../src/footage.ts";
+import { MARKS, clipNeeds } from "../src/footage.ts";
 import { PROMO, loadTrack } from "./lib/track.mjs";
 
 const args = process.argv.slice(2).filter((a) => a !== "--"); // pnpm 10 passes "--" through
@@ -15,7 +15,9 @@ const { tl, map } = loadTrack(args[0]);
 let bad = 0;
 const fps = 60;
 console.log(`preflight: "${map.name}" ${tl.bpm} BPM, ${(tl.total / tl.fps).toFixed(2)} s (${tl.total} frames), sections ${JSON.stringify(tl.sections)}`);
-for (const [file, need] of Object.entries(clipNeeds(tl))) {
+const marksFile = join(dir, "clips.json");
+const marks = existsSync(marksFile) ? { ...MARKS, ...JSON.parse(readFileSync(marksFile, "utf8")) } : MARKS;
+for (const [file, need] of Object.entries(clipNeeds(tl, marks))) {
   const path = join(dir, file);
   if (!existsSync(path)) {
     console.log(`  MISSING ${file}`);

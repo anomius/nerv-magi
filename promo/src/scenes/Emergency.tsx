@@ -3,8 +3,7 @@ import { AbsoluteFill, Sequence, interpolate, useCurrentFrame } from "remotion";
 import { Video } from "@remotion/media";
 import { C, F, glow } from "../theme";
 import { hash } from "../timeline";
-import { useFootage, useTL } from "../tl";
-import { CLIP } from "../footage";
+import { useClipMarks, useFootage, useTL } from "../tl";
 import { CaFilter, Hazard, Mono, OUT, beatShake, caText, clamp } from "../fx";
 import { lp, useLayout } from "../layout";
 import { type Key, Shot, camAt, rectToScreen } from "../camera";
@@ -17,6 +16,7 @@ export const Emergency: React.FC = () => {
   const frame = useCurrentFrame();
   const tl = useTL();
   const footage = useFootage();
+  const marks = useClipMarks();
   const S = tl.scenes.emergency[0];
   const E = tl.emergency;
   const { d } = tl;
@@ -53,12 +53,12 @@ export const Emergency: React.FC = () => {
       <AbsoluteFill style={{ translate: `${shake.x}px ${shake.y}px`, filter: alarm && beatK < 3 ? "url(#ca-em)" : undefined }}>
         <Sequence name="EMERGENCY footage" durationInFrames={E.clear - S} premountFor={fps}>
           <Shot cam={cam}>
-            <Video src={footage("emergency.mp4")} trimBefore={CLIP.takeover - (E.takeover - S)} muted style={{ position: "absolute", width: 1920, height: 1080 }} />
+            <Video src={footage("emergency.mp4")} trimBefore={marks.takeover - (E.takeover - S)} muted style={{ position: "absolute", width: 1920, height: 1080 }} />
           </Shot>
         </Sequence>
         <Sequence name="Resolve footage" from={E.clear - S} premountFor={fps}>
           <Shot cam={cam}>
-            <Video src={footage("resolve.mp4")} trimBefore={CLIP.wipeBack - (E.resolve - E.clear)} muted style={{ position: "absolute", width: 1920, height: 1080 }} />
+            <Video src={footage("resolve.mp4")} trimBefore={marks.wipeBack - (E.resolve - E.clear)} muted style={{ position: "absolute", width: 1920, height: 1080 }} />
           </Shot>
         </Sequence>
         {/* red pulse on every beat */}

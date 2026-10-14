@@ -113,8 +113,8 @@ export const FilmPicture: React.FC<{ quiet?: number }> = ({ quiet }) => {
 };
 
 /** NERV MAGI launch film: one continuous flow of eight scenes, cut to the track in `props.track`. */
-export const Film: React.FC<CutProps> = ({ audio = true, track, footage }) => (
-  <TimelineProvider track={track} footage={footage}>
+export const Film: React.FC<CutProps> = ({ audio = true, track, footage, clips }) => (
+  <TimelineProvider track={track} footage={footage} clips={clips}>
     <FilmPicture />
     <Soundtrack audio={audio} />
   </TimelineProvider>

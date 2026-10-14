@@ -34,10 +34,21 @@ More cuts, each with the medley, `-sfx-only` and `-silent` versions and a cue sh
 | `pnpm run render:cut -- teaser15` | `out/formats/teaser15/`: ≈15 s, title card → 可決 → into the dashboard → NERV MAGI (9 bars, 14.4 s) |
 | `pnpm run render:cut -- cut30` | `out/formats/cut30/`: ≈30 s, title → pattern → MAGI → reveal → EMERGENCY → outro (19 bars, 30.4 s) |
 | `pnpm run render:cut -- vertical` | `out/formats/vertical/`: 1080×1920 for Shorts, Reels, TikTok (the full edit, re-laid out) |
-| `pnpm run render:4k` | `out/4k/`: 3840×2160 master for YouTube (4K footage, Remotion `--scale 2`, H.264 High CRF 16) |
+| `pnpm run render:4k` | `out/4k/`: 3840×2160 master for YouTube (run `pnpm run footage:4k` once first: the dashboard re-recorded at 4K, laid in at native size under Remotion `--scale 2`; H.264 High CRF 16, closed 30-frame GOP) |
 | `pnpm run render:track -- tracks/<name>.json` | `out/tracks/<name>/`: the edit re-timed to your track (below) |
 
-`render:formats` renders the three short/vertical cuts in a row. The short cuts are cut on bar lines
+`render:formats` renders the three short/vertical cuts in a row. Every render waits for 3 GB of free
+memory first (`scripts/mem-guard.sh`).
+
+The 4K footage needs care: the demo feed scripts its drama (the BLOCKED agent) on the process clock,
+and at 3840×2160 the recorder is slower than real time, so on the real clock the drama races ahead of
+the frames. `footage:4k` runs `nerv` under `scripts/rec-clock` (an `LD_PRELOAD` shim that slows its
+clocks to 0.2×: the recorder paces itself at 12 fps and each clip tells its 1080p twin's story) with
+x264 at ultrafast CRF 10 (`scripts/rec-ffmpeg`). Where the takeover and the wipe back to MAIN land in a
+recording is measured into `public/<footage>/clips.json` (`scripts/measure-clips.mjs`), and the edit
+enters the clips there.
+
+The short cuts are cut on bar lines
 (`src/edits.ts`); their medley is the score spliced at the same bar lines (4 ms in, 60 ms ring-out), so
 every hit stays on its frame. The vertical lays the 4:5 type out in a 1080×1320 stage between the
 platforms' unsafe bands (no text in the top 220 px or the bottom 380 px); backgrounds bleed to the edges.

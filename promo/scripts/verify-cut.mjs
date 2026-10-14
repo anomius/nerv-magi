@@ -8,7 +8,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { editLength, editSegments } from "../src/edits.ts";
-import { barBeat, loadTrack } from "./lib/track.mjs";
+import { loadTrack } from "./lib/track.mjs";
 import { loudness } from "./lib/wav.mjs";
 
 const args = process.argv.slice(2).filter((a) => a !== "--"); // pnpm 10 passes "--" through
@@ -89,5 +89,5 @@ if (a) {
     rmSync(dir, { recursive: true, force: true });
   }
 }
-console.log(bad ? `verify: ${bad} problem(s)` : `verify: ok (${barBeat(tl, 0)} … ${barBeat(tl, tl.total)})`);
+console.log(bad ? `verify: ${bad} problem(s)` : "verify: ok");
 process.exit(bad ? 1 : 0);

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# `ffmpeg` as `nerv tv --record` calls it, for recording at 4K: x264 -preset slow manages ~4 fps at
+# 3840x2160 and holds 3.5 GB; this swaps in -preset ultrafast at CRF 10 (a near-lossless intermediate,
+# decoded once by Remotion), every other argument unchanged, and keeps the recorder's slowed clock
+# (scripts/rec-clock) out of the encoder. record-footage.sh --4k puts this folder first on PATH.
+unset LD_PRELOAD SLOWCLOCK_RATE
+self=$(cd "$(dirname "$0")" && pwd)
+PATH=$(tr ':' '\n' <<<"$PATH" | grep -vxF "$self" | paste -sd:)
+args=()
+while (( $# )); do
+  case $1 in
+    -preset) args+=(-preset ultrafast); shift 2 ;;
+    -crf) args+=(-crf 10); shift 2 ;;
+    *) args+=("$1"); shift ;;
+  esac
+done
+exec ffmpeg "${args[@]}"

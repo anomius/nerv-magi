@@ -82,15 +82,17 @@ fi
 
 # picture: muted, the map as input props
 "${NODE[@]}" --input-type=module -e "
-  import { writeFileSync } from 'node:fs';
+  import { existsSync, readFileSync, writeFileSync } from 'node:fs';
   import { loadTrack } from './scripts/lib/track.mjs';
   const { map } = loadTrack(process.argv[1] || undefined);
-  writeFileSync(process.argv[2], JSON.stringify({ audio: false, footage: process.argv[3], track: map }));
+  const marks = 'public/' + process.argv[3] + '/clips.json';
+  const clips = existsSync(marks) ? JSON.parse(readFileSync(marks, 'utf8')) : undefined;
+  writeFileSync(process.argv[2], JSON.stringify({ audio: false, footage: process.argv[3], track: map, clips }));
 " "$track" "$work/props.json" "$footage"
 bash scripts/mem-guard.sh 3
 video=$work/video.mp4
 if (( k4 )); then
-  pnpm exec remotion render "$comp" "$video" --props "$work/props.json" --scale 2 --concurrency 1 \
+  pnpm exec remotion render "$comp" "$video" --props "$work/props.json" --scale 2 --concurrency 1 --jpeg-quality 95 \
     --codec h264 --crf 10 --x264-preset fast --pixel-format yuv420p --muted --log=warn
 else
   pnpm exec remotion render "$comp" "$video" --props "$work/props.json" --concurrency 2 \

@@ -28,8 +28,8 @@ const Segments: React.FC<{ edit: EditName; audio: CutProps["audio"] }> = ({ edit
 };
 
 /** A short cut of the film (src/edits.ts), on the timeline of `props.track`. */
-export const Cut: React.FC<CutProps & { edit: EditName }> = ({ edit, audio = false, track, footage }) => (
-  <TimelineProvider track={track} footage={footage}>
+export const Cut: React.FC<CutProps & { edit: EditName }> = ({ edit, audio = false, track, footage, clips }) => (
+  <TimelineProvider track={track} footage={footage} clips={clips}>
     <Segments edit={edit} audio={audio} />
   </TimelineProvider>
 );
