@@ -15,6 +15,7 @@ echo "nerv tv started"
 
 ws=$(conf_get workspace)
 if [[ -n "$ws" && "${NERV_PLACE:-1}" == 1 && " $* " != *" --windowed "* ]] && command -v hyprctl >/dev/null; then
-  addr=$(wait_tv_window) && move_tv_window "$addr" "$ws" && echo "nerv tv on workspace $ws"
+  addr=$(wait_tv_window) && move_tv_window "$addr" "$ws" && echo "nerv tv on workspace $ws" \
+    && { fullscreen_tv_window "$addr" || echo "nerv tv: not fullscreen on workspace $ws (press f on it)" >&2; }
 fi
 exit 0

@@ -54,6 +54,7 @@ echo "tv-cast: TV desktop is workspace $ws"
 NERV_PLACE=0 "$ROOT/scripts/tv-start.sh" >/dev/null
 addr=$(wait_tv_window) || fail "nerv tv window did not appear"
 move_tv_window "$addr" "$ws" || fail "could not move the dashboard to workspace $ws"
+fullscreen_tv_window "$addr" || echo "tv-cast: warning: the dashboard is not fullscreen on the TV (press f on it)" >&2
 
 # Close the dashboard when the cast ends (one transient user unit; replaced on re-run).
 systemctl --user stop nerv-tv-cast-watch.service >/dev/null 2>&1 || true

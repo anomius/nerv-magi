@@ -48,3 +48,37 @@ move_tv_window() {
   out=$(hyprctl dispatch "hl.dsp.window.move({ workspace = \"$2\", follow = false, window = \"address:$1\" })" 2>&1)
   [[ "$out" == ok ]] || hyprctl dispatch movetoworkspacesilent "$2,address:$1" >/dev/null
 }
+
+# Hyprland's fullscreen mode of window <address> (0 = not fullscreen), empty when it is gone.
+tv_fullscreen_state() {
+  hyprctl clients -j 2>/dev/null | jq -r --arg a "$1" 'first(.[] | select(.address == $a) | .fullscreen) // empty'
+}
+
+# After a move to another monitor's workspace (e.g. the TV): Hyprland drops the fullscreen there,
+# and a window that asks for fullscreen takes the focus. Ask again through the control channel
+# only when the window is not fullscreen, then hand the focus back to the monitor that had it.
+fullscreen_tv_window() {
+  [[ "$1" =~ ^0x[[:xdigit:]]+$ ]] || { echo "refusing window '$1'" >&2; return 1; }
+  [[ "$(conf_get start_fullscreen)" != false && "$(tv_fullscreen_state "$1")" == 0 ]] || return 0
+  local pid mon s out
+  pid=$(tv_pid) || return 1
+  mon=$(hyprctl monitors -j 2>/dev/null | jq -r 'first(.[] | select(.focused) | .name) // empty')
+  echo fullscreen >> "$CMDFILE"
+  kill -USR2 "$pid"
+  for _ in $(seq 1 40); do
+    s=$(tv_fullscreen_state "$1")
+    [[ -n "$s" && "$s" != 0 ]] && break
+    sleep 0.1
+  done
+  # The focus can move a moment after the fullscreen state does: keep handing it back for ~1 s.
+  if [[ "$mon" =~ ^[[:alnum:]_.-]+$ ]]; then
+    for _ in $(seq 1 10); do
+      if [[ "$(hyprctl monitors -j 2>/dev/null | jq -r 'first(.[] | select(.focused) | .name) // empty')" != "$mon" ]]; then
+        out=$(hyprctl dispatch "hl.dsp.focus({ monitor = \"$mon\" })" 2>&1)
+        [[ "$out" == ok ]] || hyprctl dispatch focusmonitor "$mon" >/dev/null
+      fi
+      sleep 0.1
+    done
+  fi
+  [[ -n "$s" && "$s" != 0 ]]
+}
