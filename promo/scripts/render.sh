@@ -23,7 +23,7 @@ bash scripts/check-glyphs.sh
 clips=(boot main main-crt load sync emergency resolve)
 missing=0
 for c in "${clips[@]}"; do [[ -f public/footage/$c.mp4 ]] || missing=1; done
-for s in main-4k emergency-4k; do [[ -f public/footage/$s.png ]] || missing=1; done
+for s in main-still; do [[ -f public/footage/$s.png ]] || missing=1; done
 if (( missing )); then
   echo "footage missing: building nerv and recording (takes ~6 min)"
   (cd .. && cargo build --release)

@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Record the real dashboard footage the promo cuts from (headless, no window):
-# `nerv tv --record` clips at 1920x1080 60 fps and 4K `--snapshot` stills for sharp push-ins.
+# `nerv tv --record` clips at 1920x1080 60 fps, and main-still.png, a `--snapshot` of MAIN at twice the
+# clips' size (4K; 8K with --4k) for the push-ins and callouts, which zoom up to 3x.
 # Output: promo/public/footage/ (gitignored). Needs a release build: `cargo build --release`.
 #   record-footage.sh [--4k] [clip|stills|all]
 # --4k: the same clips at 3840x2160 into promo/public/footage-4k/ (for the 4K master: Remotion --scale 2
-# lays them in at their native resolution), plus the stills; main-crt is skipped (unused in the edit).
+# lays them in at their native resolution), plus an 8K still; main-crt is skipped (unused in the edit).
 # At 4K the recorder is slower than real time, while the demo feed scripts its drama (the BLOCKED agent)
 # on the process clock: so nerv runs under scripts/rec-clock (its clocks slowed to SLOWCLOCK_RATE, 0.2:
 # it paces itself at 12 fps and every clip tells the same story as its 1080p twin; the "max lag" it
@@ -44,7 +45,9 @@ rec() {
   echo "== $name ($size)"
   "${slow[@]}" "$NERV" tv --demo --size "$size" --fps 60 --record "$OUT/$name.mp4" "$@"
 }
-still() { local name=$1; shift; echo "== $name (4K still)"; "$NERV" tv --demo --size 3840x2160 --snapshot "$OUT/$name.png" "$@"; }
+still_size=3840x2160
+(( k4 )) && still_size=7680x4320
+still() { local name=$1; shift; echo "== $name ($still_size still)"; "${slow[@]}" "$NERV" tv --demo --size "$still_size" --snapshot "$OUT/$name.png" "$@"; }
 
 only=${1:-all}
 want() { [[ $only == all || $only == "$1" ]]; }
@@ -57,8 +60,7 @@ want sync      && rec sync      --scene sync --seconds 7 --preroll 36
 want emergency && rec emergency --scene main --seconds 8 --preroll 18.5
 want resolve   && rec resolve   --scene main --seconds 6 --preroll 32
 want stills && {
-  still main-4k      --scene main --frames $((60 * 38)) "${clean[@]}"
-  still emergency-4k --scene main --frames $((60 * 24)) "${clean[@]}"
+  still main-still --scene main --frames $((60 * 38)) "${clean[@]}"
 }
 # where the scripted moments landed in this recording (clips.json, passed to the edit by the renders)
 if [[ -f $OUT/emergency.mp4 && -f $OUT/resolve.mp4 ]]; then

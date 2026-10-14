@@ -35,7 +35,7 @@ export const Hero: React.FC = () => {
   return (
     <AbsoluteFill style={{ backgroundColor: "#000", overflow: "hidden" }}>
       <Shot cam={cam}>
-        <Img src={staticFile("footage/main-4k.png")} style={{ position: "absolute", width: 1920, height: 1080 }} />
+        <Img src={staticFile("footage/main-still.png")} style={{ position: "absolute", width: 1920, height: 1080 }} />
       </Shot>
       <div style={{ position: "absolute", left: r.x - 12, top: r.y - 12, width: r.w + 24, height: r.h + 24, boxShadow: "0 0 0 3000px rgba(0,0,0,0.45)" }} />
       <Brackets x={r.x - 12} y={r.y - 12} w={r.w + 24} h={r.h + 24} p={1} len={70} weight={6} />

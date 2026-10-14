@@ -30,8 +30,8 @@ for (const [file, need] of Object.entries(clipNeeds(tl, marks))) {
   bad += ok ? 0 : 1;
   console.log(`  ${ok ? "ok  " : "SHORT"} ${file.padEnd(14)} plays frames ${need.from}-${need.to} of ${have}`);
 }
-if (!existsSync(join(dir, "main-4k.png"))) {
-  console.log("  MISSING main-4k.png");
+if (!existsSync(join(dir, "main-still.png"))) {
+  console.log("  MISSING main-still.png");
   bad++;
 }
 if (bad) console.log(`preflight: ${bad} problem(s). Record longer clips: bash scripts/record-footage.sh (see its --seconds), or give the sections fewer bars.`);

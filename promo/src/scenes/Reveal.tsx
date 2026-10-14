@@ -81,7 +81,7 @@ export const Reveal: React.FC = () => {
   return (
     <AbsoluteFill style={{ backgroundColor: "#000", overflow: tall ? "visible" : "hidden" }}>
       <Shot cam={cam}>
-        <Img src={footage("main-4k.png")} style={{ position: "absolute", width: 1920, height: 1080 }} />
+        <Img src={footage("main-still.png")} style={{ position: "absolute", width: 1920, height: 1080 }} />
         <Sequence name="MAIN live (wide)" from={liveFrom - S} durationInFrames={Math.round(c1 + d(16)) - liveFrom} premountFor={fps}>
           <Video src={footage("main.mp4")} trimBefore={CLIP.mainWideIn} muted style={{ position: "absolute", width: 1920, height: 1080, opacity: live }} />
         </Sequence>

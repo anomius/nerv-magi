@@ -54,7 +54,7 @@ export const Outro: React.FC = () => {
     <AbsoluteFill style={{ backgroundColor: "#000", overflow: tall ? "visible" : "hidden" }}>
       {/* the dashboard, far behind */}
       <Img
-        src={footage("main-4k.png")}
+        src={footage("main-still.png")}
         style={{
           position: "absolute",
           width: 1920,
